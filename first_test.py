@@ -1,12 +1,15 @@
 # -*- encoding=utf8 -*-
 __author__ = "a0973_ecy1f7c"
 
+import csv
+
 from airtest.core.api import *
 import tkinter as tk
 
 ST.OPDELAY = 0.3  # 每條步驟間執行間隔
 ST.THRESHOLD = 0.7  # 預設臨界值
 ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
+
 # auto_setup(__file__,devices=["Android://127.0.0.1:5555"])
 
 dev = connect_device('Android:///')  # 連接到當前連接設備
@@ -98,20 +101,222 @@ def test_temple():
     print('神殿')
 
 
-def login():
+def login(user_number):
+    id = ''
+    ps = ''
+    try:
+        with open('Account' + user_number + '.csv', 'r', newline='') as csvfile:
+            rows = csv.DictReader(csvfile)
+            for row in rows:
+                id = row['Id']
+                ps = row['Password']
+                if row['Id'] == '':
+                    return
+    except FileNotFoundError:
+        pass
+
+    wait(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    touch(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    wait(Template(r"prc_login_2.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    touch(Template(r"prc_login_2.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    wait(Template(r"prc_login_3.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    touch(Template(r"prc_login_3.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    wait(Template(r"prc_login_id.png", record_pos=(-0.001, -0.075), resolution=(1600, 900)))
+    touch(Template(r"prc_login_id.png", record_pos=(-0.001, -0.075), resolution=(1600, 900)))
+    sleep(1)
+    text(id, enter=False)
+    wait(Template(r"prc_login_4.png", record_pos=(0.001, -0.149), resolution=(1600, 900)))
+    touch(Template(r"prc_login_4.png", record_pos=(0.001, -0.149), resolution=(1600, 900)))
+    sleep(2)
+    wait(Template(r"prc_login_ps.png", record_pos=(-0.002, 0.01), resolution=(1600, 900)))
+    touch(Template(r"prc_login_ps.png", record_pos=(-0.002, 0.01), resolution=(1600, 900)))
+    sleep(1)
+    text(ps, enter=False)
+    wait(Template(r"prc_login_4.png", record_pos=(0.001, -0.149), resolution=(1600, 900)))
+    touch(Template(r"prc_login_4.png", record_pos=(0.001, -0.149), resolution=(1600, 900)))
+    sleep(2)
+    wait(Template(r"prc_button_ok.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+
     print('登入帳號小幫手')
 
 
-# 主要值行區塊
+'''圖形化視窗函式'''
 
-root = tk.Tk()
-root.geometry('1280x720')
 
+# 視窗排版用的函式
+def define_layout(obj, cols=1, rows=1):
+    def method(trg, col, row):
+
+        for c in range(cols):
+            trg.columnconfigure(c, weight=1)
+        for r in range(rows):
+            trg.rowconfigure(r, weight=1)
+
+    if type(obj) == list:
+        [method(trg, cols, rows) for trg in obj]
+    else:
+        trg = obj
+        method(trg, cols, rows)
+
+
+# 註冊賬密視窗
+def ID_Window(bt_number):
+    # 帳密讀取
+    var1 = tk.StringVar()
+    var2 = tk.StringVar()
+
+    newWindow = tk.Toplevel(div3)
+    newWindow.title("註冊")
+    newWindow.config(bg="white")
+    newWindow.geometry("230x100")
+    # 帳密標籤
+    lb_id = tk.Label(newWindow, text='帳號', bg='white', fg='#323232')
+    lb_ps = tk.Label(newWindow, text='密碼', bg='white', fg='#323232')
+
+    # 帳密Entry
+    et_id = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
+    et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2)
+
+    # 確認按鈕
+    bt_ok = tk.Button(newWindow, text='確認', bg='#323232', fg='white',
+                      command=lambda: user(var1.get(), var2.get(), bt_number))
+
+    lb_id.grid(column=0, row=0)
+    lb_ps.grid(column=0, row=1)
+
+    et_id.grid(column=1, row=0)
+    et_ps.grid(column=1, row=1)
+
+    bt_ok.grid(column=1, row=2)
+
+
+# 按下按鈕後的帳密讀出函式
+def user(id, ps, btn):
+    with open('Account' + btn + '.csv', 'w', newline='') as csvfile:  # 寫入模式，如果檔案已存在會覆寫
+        fieldnames = ['Id', 'Password']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)  # 設定欄位
+        writer.writeheader()
+        writer.writerow({'Id': id, 'Password': ps})  # 讀兩個欄位的資料
+        csvfile.close()
+        sigon_1.config(text='ID:' + id)  # 設定標籤為ID:
+    print(id, ps)
+
+
+'''---------------------視窗---------------------'''
+window = tk.Tk()
+window.title('超異域公主連結自動化控制視窗')
+
+align_mode = 'nswe'
+pad = 5
+
+# 視窗分割成三塊分別是div1(左),div2(右上),div3(右下) -> 視窗大小在這調整
+div_size = 200
+div1_hsize = div_size * 2.5
+div3_hsize = div_size * 1.5
+div1 = tk.Frame(window, width=div_size, height=div1_hsize, bg='#323232')
+div2 = tk.Frame(window, width=div_size, height=div_size, bg='#5e5d5d')
+div3 = tk.Frame(window, width=div_size, height=div3_hsize, bg='#5e5d5d')
+
+div1.grid(column=0, row=0, rowspan=2)
+div2.grid(column=1, row=0)
+div3.grid(column=1, row=1)
+
+window.update()
+win_size = min(window.winfo_width(), window.winfo_height())
+print(win_size)
+
+div1.grid(column=0, row=0, padx=pad, pady=pad, rowspan=2, sticky=align_mode)
+div2.grid(column=1, row=0, padx=pad, pady=pad, sticky=align_mode)
+div3.grid(column=1, row=1, padx=pad, pady=pad, sticky=align_mode)
+
+define_layout(window, cols=2, rows=2)
+define_layout([div1, div2, div3])
+'''----------------------------分隔線---以下是按鈕.標籤等物件---------------------------------------------'''
+
+# 註冊登入標籤
+sigon_1 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
+sigon_2 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
+sigon_3 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
+sigon_4 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
+
+# 註冊按鈕
+bt_sigon_up_1 = tk.Button(div3, text='註冊', bg='#ffffff', fg='black', command=lambda: ID_Window('1'))  # 傳入按鈕編號
+bt_sigon_up_2 = tk.Button(div3, text='註冊', bg='#ffffff', fg='black', command=lambda: ID_Window('2'))
+bt_sigon_up_3 = tk.Button(div3, text='註冊', bg='#ffffff', fg='black', command=lambda: ID_Window('3'))
+bt_sigon_up_4 = tk.Button(div3, text='註冊', bg='#ffffff', fg='black', command=lambda: ID_Window('4'))
+
+# 登入按鈕
+bt_sigon_in_1 = tk.Button(div3, text='登入', bg='#ffffff', fg='black', command=lambda: login('1'))
+bt_sigon_in_2 = tk.Button(div3, text='登入', bg='#ffffff', fg='black', command=lambda: login('2'))
+bt_sigon_in_3 = tk.Button(div3, text='登入', bg='#ffffff', fg='black', command=lambda: login('3'))
+bt_sigon_in_4 = tk.Button(div3, text='登入', bg='#ffffff', fg='black', command=lambda: login('4'))
+
+'''-----------物件排版------------'''
+# 註冊登入標籤排版
+sigon_1.grid(column=0, row=1, sticky=align_mode)
+sigon_2.grid(column=0, row=2, sticky=align_mode)
+sigon_3.grid(column=0, row=3, sticky=align_mode)
+sigon_4.grid(column=0, row=4, sticky=align_mode)
+# 註冊按鈕排版
+bt_sigon_up_1.grid(column=1, row=1, sticky=align_mode)
+bt_sigon_up_2.grid(column=1, row=2, sticky=align_mode)
+bt_sigon_up_3.grid(column=1, row=3, sticky=align_mode)
+bt_sigon_up_4.grid(column=1, row=4, sticky=align_mode)
+
+# 登入按鈕排版
+bt_sigon_in_1.grid(column=2, row=1, sticky=align_mode)
+bt_sigon_in_2.grid(column=2, row=2, sticky=align_mode)
+bt_sigon_in_3.grid(column=2, row=3, sticky=align_mode)
+bt_sigon_in_4.grid(column=2, row=4, sticky=align_mode)
+
+''' 主要值行區塊 '''
 dungeon_lv = []  # 地下城難度選擇
 exp_vent_lv = []  # 經驗值冒險難度選擇
 mana_vent_lv = []  # 瑪那冒險難度選擇
 temple_lv = []  # 神殿難度選擇
 holy_ly = []  # 聖蹟難度選擇
 
+# 將有註冊過帳號更新到標籤
+try:
+    with open('Account1.csv', 'r', newline='') as csvfile:
+        rows = csv.DictReader(csvfile)
+        for row in rows:
+            sigon_1.config(text=row['Id'])
+            if row['Id'] == '':
+                sigon_1.config(text='Sign up')
+except FileNotFoundError:
+    pass
 
-root.mainloop()
+try:
+    with open('Account2.csv', 'r', newline='') as csvfile:
+        rows = csv.DictReader(csvfile)
+        for row in rows:
+            sigon_2.config(text=row['Id'])
+            if row['Id'] == '':
+                sigon_2.config(text='Sign up')
+except FileNotFoundError:
+    pass
+
+try:
+    with open('Account3.csv', 'r', newline='') as csvfile:
+        rows = csv.DictReader(csvfile)
+        for row in rows:
+            sigon_3.config(text=row['Id'])
+            if row['Id'] == '':
+                sigon_3.config(text='Sign up')
+except FileNotFoundError:
+    pass
+
+try:
+    with open('Account4.csv', 'r', newline='') as csvfile:
+        rows = csv.DictReader(csvfile)
+        for row in rows:
+            sigon_4.config(text=row['Id'])
+            if row['Id'] == '':
+                sigon_4.config(text='Sign up')
+except FileNotFoundError:
+    pass
+
+window.mainloop()
+touch(Template(r"t.png", record_pos=(-0.001, -0.072), resolution=(1600, 900)))
