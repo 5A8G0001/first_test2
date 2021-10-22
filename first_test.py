@@ -1,6 +1,6 @@
 # -*- encoding=utf8 -*-
 __author__ = "a0973_ecy1f7c"
-
+#版本 2021/10/22 10:41
 import csv
 
 from airtest.core.api import *
@@ -12,7 +12,7 @@ ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
 
 # auto_setup(__file__,devices=["Android://127.0.0.1:5555"])
 
-dev = connect_device('Android:///')  # 連接到當前連接設備
+dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
 
 
 def to_index():  # 前往主頁
@@ -113,6 +113,7 @@ def login(user_number):
                 if row['Id'] == '':
                     return
     except FileNotFoundError:
+        return
         pass
 
     wait(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
@@ -319,4 +320,3 @@ except FileNotFoundError:
     pass
 
 window.mainloop()
-touch(Template(r"t.png", record_pos=(-0.001, -0.072), resolution=(1600, 900)))
