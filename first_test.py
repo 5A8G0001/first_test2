@@ -1,7 +1,7 @@
 # -*- encoding=utf8 -*-
 __author__ = "a0973_ecy1f7c"
 
-# 版本 2021/10/22 10:41
+# 版本 2021/10/23 16:34
 # 所有touch前都接了一個wait防止網路問題
 # 特殊地方使用try
 
@@ -9,6 +9,7 @@ import csv
 
 from airtest.core.api import *
 import tkinter as tk
+import tkinter.ttk as ttk
 
 ST.OPDELAY = 0.3  # 每條步驟間執行間隔
 ST.THRESHOLD = 0.7  # 預設臨界值
@@ -18,12 +19,14 @@ ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
 
 dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
 
+
 def test_to_index():  # 前往主頁
     wait(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
     touch(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到主頁
 
 
-def test_game_start():  # 把遊戲打開進入主頁之一連串操作
+# 把遊戲打開進入主頁之一連串操作
+def test_game_start():
     touch(Template(r"prc_icon.png", record_pos=(-0.34, -0.202), resolution=(3040, 1440)))  # 點擊公主連結開啟遊戲
     wait(Template(r"prc_st_menu .png", record_pos=(-0.34, -0.202), resolution=(3040, 1440)))  # 等待進入到遊戲進入主畫面
     touch(Template("prc_st_t.png"))  # 點擊左下角小圖標
@@ -57,7 +60,11 @@ def test_game_start():  # 把遊戲打開進入主頁之一連串操作
     # 正式進入主頁
 
 
-def test_exp_vent():  # 經驗值冒險關卡 需要傳入瑪娜關卡和經驗值關卡的難度選擇
+# 經驗值冒險關卡 需要傳入瑪娜關卡和經驗值關卡的難度選擇
+def test_exp_vent(event):
+    print(exp_vent_lv_cbText.get(), "exp_vent_lv_cbText")  # exp_vent_lv_cbText.get() 經驗值冒險關卡傳入的關卡難度  與  "不選擇"
+    print(mana_vent_lv_cbText.get(), "mana_vent_lv_cbText")  # mana_vent_lv_cbText.get()瑪娜關卡傳入的關卡難度  與  "不選擇"
+
     wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
     touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
     wait(Template(r"prc_vent_explore.png", record_pos=(0.307, -0.119), resolution=(3040, 1440)))
@@ -88,9 +95,46 @@ def test_exp_vent():  # 經驗值冒險關卡 需要傳入瑪娜關卡和經驗�
         print('expvent is not open')
 
 
-def test_dungeon():  # 需要有一個傳入值，為地下城難度
-    print('地下城')
-    #  預想 ， 透過畫面左右會出現的小箭頭還換頁查找，根據傳入的難度給判定是要點左邊箭頭還是右邊箭頭
+# 需要有一個傳入值，為地下城難度
+def test_dungeon():
+    print(dungeon_lv_cbText.get(),
+          cb_dungeon_lv.current())  # dungeon_lv_cbText.get() 傳入的關卡名稱  與  "不選擇", cb_dungeon_lv.current() int  數值從0到7
+
+    wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
+    wait(Template(r"prc_vent_dungeon.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_vent_dungeon.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊地下城
+    try:
+        wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                      resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                       resolution=(3040, 1440)))  # 對應難度關卡
+    except TargetNotFoundError:
+        if cb_dungeon_lv.current() > 3:
+            wait(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+            touch(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面右移
+
+            wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                          resolution=(3040, 1440)))
+            touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                           resolution=(3040, 1440)))  # 對應難度關卡
+        elif cb_dungeon_lv.current() < 3:
+            wait(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+            touch(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面左移
+            wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                          resolution=(3040, 1440)))
+            touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                           resolution=(3040, 1440)))  # 對應難度關卡
+    except TargetNotFoundError:
+        print('n')
+        test_pop_upwindow('地下城難度選擇錯誤!')
+        test_to_index()
+        return
+    wait(Template(r"prc_button_jump.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_jump.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊跳過
+    wait(Template(r"prc_button_w_ok.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_w_ok.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊白色ok按鈕
+
 
 def test_survey():
     print('調查，判斷聖蹟調查與神殿調查各自有沒有開，有機會跳限定商店，要按白色取消')
@@ -105,7 +149,7 @@ def test_survey():
         touch(Template(r"prc_vent_survey.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往調查
     except TargetNotFoundError:  # 如果調查未開放
         print('調查未開啟')
-        test_to_index() # 回到主頁
+        test_to_index()  # 回到主頁
         return
     try:  # 判斷聖跡是不是有開啟
         wait(Template(r"prc_survey_holy.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
@@ -127,17 +171,18 @@ def test_survey():
         return
 
 
-def test_holy():  # 需要有一個傳入值，為聖跡難度
-    print('聖跡')
+def test_holy(event):  # 需要有一個傳入值，為聖跡難度
+    print(holy_lv_cbText.get(), "holy_lv_cbText")  # holy_lv_cbText.get() 聖跡難度
 
 
-def test_temple():  # 需要有一個傳入值，為神殿難度
-    print('神殿')
+def test_temple(event):  # 需要有一個傳入值，為神殿難度
+    print(temple_lv_cbText.get(), "temple_lv_cbText")  # temple_lv_cbText.get() 傳入的神殿難度
 
 
-def test_login(user_number): # user_number用來判斷是第幾個按鈕被點擊
+def test_login(user_number):  # user_number用來判斷是第幾個按鈕被點擊
     id = ''  # ID
     ps = ''  # 密碼
+
     try:
         with open('Account' + user_number + '.csv', 'r', newline='') as csvfile:  # 根據點擊的登入按鈕開啟存放帳密的檔案
             rows = csv.DictReader(csvfile)  # 將檔案內容依照欄位讀取出來
@@ -147,10 +192,12 @@ def test_login(user_number): # user_number用來判斷是第幾個按鈕被點�
                 ps = row['Password']
                 if row['Id'] == '' or row['Password'] == '':  # 如果沒有存東西會結束
                     print('此欄位未存帳號')  # 可以考慮做成彈窗
+                    test_pop_upwindow('此欄位未存帳號')
                     return
     except FileNotFoundError:  # 如果沒有檔案也會結束
         print('此欄位未存帳號')  # 可以考慮做成彈窗
         return
+
     try:  # 確定是不是有在登入帳號的畫面，也就是資料連動是不是在畫面上
         wait(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)), timeout=7)
         touch(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 有資料連動的話就點擊
@@ -182,23 +229,21 @@ def test_login(user_number): # user_number用來判斷是第幾個按鈕被點�
     print('登入帳號小幫手完成')  # 可以考慮幫我做成彈窗
 
 
+def test_main():
+    if cb_dungeon_lv.get() != '不選擇':
+        test_dungeon()
+        test_to_index()
+
+    '''print("OK")
+    print(cb_dungeon_lv.get())
+    print(cb_dungeon_lv.current())
+    print(cb_exp_vent_lv.get())
+    print(cb_mana_vent_lv.get())
+    print(cb_temple_lv.get())
+    print(cb_holy_lv.get())'''
+
+
 '''圖形化視窗函式'''
-
-
-# 視窗排版用的函式
-def test_define_layout(obj, cols=1, rows=1):
-    def method(trg, col, row):
-
-        for c in range(cols):
-            trg.columnconfigure(c, weight=1)
-        for r in range(rows):
-            trg.rowconfigure(r, weight=1)
-
-    if type(obj) == list:
-        [method(trg, cols, rows) for trg in obj]
-    else:
-        trg = obj
-        method(trg, cols, rows)
 
 
 # 註冊賬密視窗
@@ -221,7 +266,7 @@ def test_ID_Window(bt_number):  # bt_number用來判斷是第幾個按鈕被點�
 
     # 確認按鈕
     bt_ok = tk.Button(newWindow, text='確認', bg='#323232', fg='white',
-                      command=lambda: test_user(var1.get(), var2.get(), bt_number))
+                      command=lambda: test_user(var1.get(), var2.get(), bt_number, newWindow))
 
     lb_id.grid(column=0, row=0)
     lb_ps.grid(column=0, row=1)
@@ -233,7 +278,8 @@ def test_ID_Window(bt_number):  # bt_number用來判斷是第幾個按鈕被點�
 
 
 # 按下按鈕後的帳密讀出函式
-def test_user(id, ps, btn):  # btn用來判斷是第幾個按鈕被點擊
+def test_user(id, ps, btn, newWindow):  # btn用來判斷是第幾個按鈕被點擊
+    newWindow.destroy()
     with open('Account' + btn + '.csv', 'w', newline='') as csvfile:  # 寫入模式，如果檔案已存在會覆寫
         fieldnames = ['Id', 'Password']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)  # 設定欄位
@@ -245,7 +291,7 @@ def test_user(id, ps, btn):  # btn用來判斷是第幾個按鈕被點擊
             sigon_1.config(text='ID:' + id)  # 設定標籤為ID:
             if id == '' or ps == '':  # 如果ID或密碼沒打就等於清空
                 sigon_1.config(text='Sign up')
-                print('帳密清空')  #可以考慮做成彈窗
+                print('帳密清空')  # 可以考慮做成彈窗
                 return
         elif btn == '2':
             sigon_2.config(text='ID:' + id)  # 設定標籤為ID:
@@ -268,9 +314,31 @@ def test_user(id, ps, btn):  # btn用來判斷是第幾個按鈕被點擊
     print(id, ps)
 
 
+# 彈窗
+def test_pop_upwindow(str):
+    newWindow = tk.Toplevel(window)
+
+    newWindow.title("溫馨小提示 (:3 」∠ )_")
+    newWindow.config(bg="white")
+    newWindow.geometry("290x150+10+50")
+    lb_1 = tk.Label(newWindow, text=str, bg='white', fg='black')
+    lb_2 = tk.Label(newWindow, text=str, bg='white', fg='black')
+
+    lb_1.grid(column=1, row=1)
+    lb_2.grid(column=1, row=2)
+
+    '''改變grid和text多加一點空白能排版
+    tk.Label(newWindow, text='', bg='white', fg='white').grid(column=1, row=0)
+    tk.Label(newWindow, text='', bg='white', fg='white').grid(column=0, row=1)
+    '''
+
+
 '''---------------------視窗---------------------'''
 window = tk.Tk()
+
 window.title('超異域公主連結自動化控制視窗')
+
+window.resizable(0, 0)
 
 align_mode = 'nswe'
 pad = 5
@@ -281,7 +349,7 @@ div1_hsize = div_size * 2.5
 div3_hsize = div_size * 1.5
 div1 = tk.Frame(window, width=div_size, height=div1_hsize, bg='#323232')
 div2 = tk.Frame(window, width=div_size, height=div_size, bg='#5e5d5d')
-div3 = tk.Frame(window, width=div_size, height=div3_hsize, bg='#5e5d5d')
+div3 = tk.Frame(window, width=div_size, height=div3_hsize, bg='white')
 
 div1.grid(column=0, row=0, rowspan=2)
 div2.grid(column=1, row=0)
@@ -290,13 +358,11 @@ div3.grid(column=1, row=1)
 window.update()
 win_size = min(window.winfo_width(), window.winfo_height())
 print(win_size)
-
 div1.grid(column=0, row=0, padx=pad, pady=pad, rowspan=2, sticky=align_mode)
 div2.grid(column=1, row=0, padx=pad, pady=pad, sticky=align_mode)
 div3.grid(column=1, row=1, padx=pad, pady=pad, sticky=align_mode)
-
-test_define_layout(window, cols=2, rows=2)
-test_define_layout([div1, div2, div3])
+test_pop_upwindow('請選擇自己已經通關過的難度!!')
+'''div3'''
 '''----------------------------分隔線---以下是按鈕.標籤等物件---------------------------------------------'''
 
 # 註冊登入標籤
@@ -319,37 +385,116 @@ bt_sigon_in_4 = tk.Button(div3, text='登入', bg='#ffffff', fg='black', command
 
 '''-----------物件排版------------'''
 # 註冊登入標籤排版
+tk.Label(div3, text='                     ', bg='white', fg='white').grid(column=1, row=1)
+tk.Label(div3, text=' ', bg='white', fg='white').grid(column=3, row=1)
+
 sigon_1.grid(column=0, row=1, sticky=align_mode)
 sigon_2.grid(column=0, row=2, sticky=align_mode)
 sigon_3.grid(column=0, row=3, sticky=align_mode)
 sigon_4.grid(column=0, row=4, sticky=align_mode)
 # 註冊按鈕排版
-bt_sigon_up_1.grid(column=1, row=1, sticky=align_mode)
-bt_sigon_up_2.grid(column=1, row=2, sticky=align_mode)
-bt_sigon_up_3.grid(column=1, row=3, sticky=align_mode)
-bt_sigon_up_4.grid(column=1, row=4, sticky=align_mode)
+bt_sigon_up_1.grid(column=2, row=1, sticky=align_mode)
+bt_sigon_up_2.grid(column=2, row=2, sticky=align_mode)
+bt_sigon_up_3.grid(column=2, row=3, sticky=align_mode)
+bt_sigon_up_4.grid(column=2, row=4, sticky=align_mode)
 
 # 登入按鈕排版
-bt_sigon_in_1.grid(column=2, row=1, sticky=align_mode)
-bt_sigon_in_2.grid(column=2, row=2, sticky=align_mode)
-bt_sigon_in_3.grid(column=2, row=3, sticky=align_mode)
-bt_sigon_in_4.grid(column=2, row=4, sticky=align_mode)
+bt_sigon_in_1.grid(column=4, row=1, sticky=align_mode)
+bt_sigon_in_2.grid(column=4, row=2, sticky=align_mode)
+bt_sigon_in_3.grid(column=4, row=3, sticky=align_mode)
+bt_sigon_in_4.grid(column=4, row=4, sticky=align_mode)
 
+'''div1'''
 ''' 主要執行區塊 '''
-dungeon_lv = []  # 地下城難度選擇
-exp_vent_lv = []  # 經驗值冒險難度選擇
-mana_vent_lv = []  # 瑪那冒險難度選擇
-temple_lv = []  # 神殿難度選擇
-holy_ly = []  # 聖蹟難度選擇
 
+# 地下城下拉式選單
+lb_dungeon_lv = tk.Label(div1, text='地下城難度', bg='#323232', fg='white')
+
+dungeon_lv_cbText = tk.StringVar()
+cb_dungeon_lv = ttk.Combobox(div1, textvariable=dungeon_lv_cbText, state='readonly', width=7)
+cb_dungeon_lv['values'] = ['雲海山脈', '密林大樹', '斷崖遺跡', '蒼海孤塔', '毒瘴闇稜', '綠龍骸嶺', '天上浮游城', '不選擇']
+cb_dungeon_lv.current(7)
+# cb_dungeon_lv.bind('<<ComboboxSelected>>', test_dungeon)
+
+# 地下城排版
+tk.Label(div1, text=' ', bg='#323232', fg='#323232').grid(column=0, row=0)
+tk.Label(div1, text=' ', bg='#323232', fg='#323232').grid(column=3, row=0)
+
+lb_dungeon_lv.grid(column=1, row=0)
+cb_dungeon_lv.grid(column=1, row=1)
+
+# 經驗值冒險下拉式選單
+lb_exp_vent_lv = tk.Label(div1, text='經驗值冒險難度', bg='#323232', fg='white')
+
+exp_vent_lv_cbText = tk.StringVar()
+cb_exp_vent_lv = ttk.Combobox(div1, textvariable=exp_vent_lv_cbText, state='readonly', width=7)
+cb_exp_vent_lv['values'] = ['LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6', 'LV7', 'LV8', 'LV9', 'LV10', 'LV11', '不選擇']
+cb_exp_vent_lv.current(11)
+# cb_exp_vent_lv.bind('<<ComboboxSelected>>', test_exp_vent)
+
+# 經驗值冒險排版
+
+lb_exp_vent_lv.grid(column=1, row=2)
+cb_exp_vent_lv.grid(column=1, row=3)
+
+# 瑪那冒險下拉式選單
+lb_mana_vent_lv = tk.Label(div1, text='瑪那冒險難度', bg='#323232', fg='white')
+
+mana_vent_lv_cbText = tk.StringVar()
+cb_mana_vent_lv = ttk.Combobox(div1, textvariable=mana_vent_lv_cbText, state='readonly', width=7)
+cb_mana_vent_lv['values'] = ['LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6', 'LV7', 'LV8', 'LV9', 'LV10', 'LV11', '不選擇']
+cb_mana_vent_lv.current(11)
+# cb_mana_vent_lv.bind('<<ComboboxSelected>>', test_exp_vent)
+
+# 瑪那冒險排版
+
+lb_mana_vent_lv.grid(column=1, row=4)
+cb_mana_vent_lv.grid(column=1, row=5)
+
+# 神殿下拉式選單
+lb_temple_lv = tk.Label(div1, text='神殿難度', bg='#323232', fg='white')
+
+temple_lv_cbText = tk.StringVar()
+cb_temple_lv = ttk.Combobox(div1, textvariable=temple_lv_cbText, state='readonly', width=7)
+cb_temple_lv['values'] = ['LV1', 'LV2', '不選擇']
+cb_temple_lv.current(2)
+# cb_temple_lv.bind('<<ComboboxSelected>>', test_temple)
+
+# 神殿排版
+
+lb_temple_lv.grid(column=1, row=6)
+cb_temple_lv.grid(column=1, row=7)
+
+# 聖跡下拉式選單
+lb_holy_lv = tk.Label(div1, text='聖跡難度', bg='#323232', fg='white')
+
+holy_lv_cbText = tk.StringVar()
+cb_holy_lv = ttk.Combobox(div1, textvariable=holy_lv_cbText, state='readonly', width=7)
+cb_holy_lv['values'] = ['LV1', 'LV2', 'LV3', '不選擇']
+cb_holy_lv.current(3)
+# cb_holy_lv.bind('<<ComboboxSelected>>', test_holy)
+
+# 聖跡排版
+
+lb_holy_lv.grid(column=1, row=8)
+cb_holy_lv.grid(column=1, row=9)
+
+# 開始按鈕
+cpi = tk.PhotoImage(file="start.PNG")
+start = tk.Button(div1, image=cpi, command=test_main)
+
+# 開始按鈕排版
+tk.Label(div1, text=' ', bg='#323232', fg='#323232').grid(column=1, row=12)
+start.grid(column=1, row=13)
 
 '''------以下 try 功用為將有註冊過的帳號更新到標籤-----'''
+
 
 try:
     with open('Account1.csv', 'r', newline='') as csvfile:
         rows = csv.DictReader(csvfile)
         for row in rows:
-            sigon_1.config(text='ID:'+row['Id'])
+            sigon_1.config(text='ID:' + row['Id'])
             if row['Id'] == '':
                 sigon_1.config(text='Sign up')
 except FileNotFoundError:
@@ -359,7 +504,7 @@ try:
     with open('Account2.csv', 'r', newline='') as csvfile:
         rows = csv.DictReader(csvfile)
         for row in rows:
-            sigon_2.config(text='ID:'+row['Id'])
+            sigon_2.config(text='ID:' + row['Id'])
             if row['Id'] == '':
                 sigon_2.config(text='Sign up')
 except FileNotFoundError:
@@ -369,7 +514,7 @@ try:
     with open('Account3.csv', 'r', newline='') as csvfile:
         rows = csv.DictReader(csvfile)
         for row in rows:
-            sigon_3.config(text='ID:'+row['Id'])
+            sigon_3.config(text='ID:' + row['Id'])
             if row['Id'] == '':
                 sigon_3.config(text='Sign up')
 except FileNotFoundError:
@@ -379,13 +524,12 @@ try:
     with open('Account4.csv', 'r', newline='') as csvfile:
         rows = csv.DictReader(csvfile)
         for row in rows:
-            sigon_4.config(text='ID:'+row['Id'])
+            sigon_4.config(text='ID:' + row['Id'])
             if row['Id'] == '':
                 sigon_4.config(text='Sign up')
 except FileNotFoundError:
     pass
 
 '''-----註冊過的帳號更新完成-----'''
-
 
 window.mainloop()
