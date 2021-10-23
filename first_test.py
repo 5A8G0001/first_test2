@@ -21,8 +21,13 @@ dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接�
 
 
 def test_to_index():  # 前往主頁
-    wait(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
-    touch(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到主頁
+    try:
+        wait(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+        touch(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到主頁
+    except TargetNotFoundError:
+        test_pop_upwindow('未找到主頁，還是你已經在主頁了呢?')
+        return
+
 
 
 # 把遊戲打開進入主頁之一連串操作
@@ -60,39 +65,99 @@ def test_game_start():
     # 正式進入主頁
 
 
-# 經驗值冒險關卡 需要傳入瑪娜關卡和經驗值關卡的難度選擇
-def test_exp_vent(event):
+# 經驗值冒險關卡 需要傳入經驗值關卡的難度選擇
+def test_exp_vent():
     print(exp_vent_lv_cbText.get(), "exp_vent_lv_cbText")  # exp_vent_lv_cbText.get() 經驗值冒險關卡傳入的關卡難度  與  "不選擇"
-    print(mana_vent_lv_cbText.get(), "mana_vent_lv_cbText")  # mana_vent_lv_cbText.get()瑪娜關卡傳入的關卡難度  與  "不選擇"
 
     wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
     touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
     wait(Template(r"prc_vent_explore.png", record_pos=(0.307, -0.119), resolution=(3040, 1440)))
     touch(Template(r"prc_vent_explore.png", record_pos=(0.307, -0.119), resolution=(3040, 1440)))  # 點擊探索
     wait(Template(r"prc_v_e_expvent.png", record_pos=(0.113, -0.034), resolution=(3040, 1440)))  # 等待Exp冒險出現
-    if exists(Template(r"prc_v_e_expvent.png", record_pos=(0.113, -0.034), resolution=(3040, 1440))):
-        touch(Template(r"prc_v_e_expvent.png"))  # 點擊Exp冒險
-        wait(Template(r"prc_v_e_expvent_Lv2.png", record_pos=(0.075, -0.004),
-                      resolution=(3040, 1440)))  # 等待選擇Lv ()的Exp冒險
-        touch(
-            Template(r"prc_v_e_expvent_Lv2.png", record_pos=(0.075, -0.004), resolution=(3040, 1440)))  # 選擇Lv ()的Exp冒險
+    touch(Template(r"prc_v_e_expvent.png"))  # 點擊Exp冒險
+    try:
+        # 等待選擇Lv ()的Exp冒險
+        wait(Template(r"exp_" + cb_exp_vent_lv.get() + ".png", record_pos=(0.075, -0.004), resolution=(3040, 1440),
+                      rgb=True))
+        # 選擇Lv ()的Exp冒險
+        touch(Template(r"exp_" + cb_exp_vent_lv.get() + ".png", record_pos=(0.075, -0.004), resolution=(3040, 1440),
+                       rgb=True))
+    except TargetNotFoundError:
+        test_pop_upwindow('經驗值關卡難度選擇錯誤!')
+        return
+    try:
         wait(Template(r"prc_fast_2.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
         touch(Template(r"prc_fast_2.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩兩次
-        wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
-        touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
-        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))
+    except TargetNotFoundError:  # 如果有買月卡會有五次掃蕩次數
+        wait(Template(r"prc_button_add.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+        touch(Template(r"prc_button_add.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)), duration=5)  # 增加掃蕩次數
+        try:
+            wait(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+            touch(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩五次
+        except TargetNotFoundError:
+            test_pop_upwindow('錯誤')
+            return
+    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+    try:
+        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)), timeout=7)
         touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))  # 繼續前往瑪那冒險
-        wait(Template(r"prc_v_e_manavent_Lv2.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))
-        touch(Template(r"prc_v_e_manavent_Lv2.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))  # 選擇Lv()的瑪那冒險
+        return
+    except TargetNotFoundError:
+        try:
+            wait(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+            touch(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到探索top
+            return
+        except TargetNotFoundError:
+            test_pop_upwindow('錯誤')
+            return
+
+
+# 瑪那冒險關卡
+
+def test_mana_vent():
+    print(mana_vent_lv_cbText.get(), "mana_vent_lv_cbText")  # mana_vent_lv_cbText.get()瑪娜關卡傳入的關卡難度  與  "不選擇"
+
+    wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
+    wait(Template(r"prc_vent_explore.png", record_pos=(0.307, -0.119), resolution=(3040, 1440)))
+    touch(Template(r"prc_vent_explore.png", record_pos=(0.307, -0.119), resolution=(3040, 1440)))  # 點擊探索
+    wait(Template(r"prc_v_e_manavent.png", record_pos=(0.113, -0.034), resolution=(3040, 1440)))  # 等待Mana冒險出現
+    touch(Template(r"prc_v_e_manavent.png"))  # 點擊Mana冒險
+    try:
+        # 等待選擇Lv ()的Mana冒險
+        wait(Template(r"mana_" + cb_mana_vent_lv.get() + ".png", record_pos=(0.075, -0.004), resolution=(3040, 1440),
+                      rgb=True))
+        # 選擇Lv ()的Exp冒險
+        touch(Template(r"mana_" + cb_mana_vent_lv.get() + ".png", record_pos=(0.075, -0.004), resolution=(3040, 1440),
+                       rgb=True))
+    except TargetNotFoundError:
+        test_pop_upwindow('瑪那關卡難度選擇錯誤!')
+        return
+
+    try:
         wait(Template(r"prc_fast_2.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
         touch(Template(r"prc_fast_2.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩兩次
-        wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
-        touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+    except TargetNotFoundError:  # 如果買月卡會有五次掃蕩次數
+        wait(Template(r"prc_button_add.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+        touch(Template(r"prc_button_add.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)), duration=5)  # 增加掃蕩次數
+        try:
+            wait(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+            touch(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩五次
+        except TargetNotFoundError:
+            test_pop_upwindow('錯誤')
+            return
+    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+
+    try:
         wait(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
         touch(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到探索top
-        test_to_index()  # 呼叫回到主頁函式
-    else:
-        print('expvent is not open')
+        return
+    except TargetNotFoundError:
+        wait(Template(r"前往經驗值冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"前往經驗值冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))  # 繼續前往瑪那冒險
+        return
 
 
 # 需要有一個傳入值，為地下城難度
@@ -111,25 +176,32 @@ def test_dungeon():
                        resolution=(3040, 1440)))  # 對應難度關卡
     except TargetNotFoundError:
         if cb_dungeon_lv.current() > 3:
-            wait(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
-            touch(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面右移
+            try:
+                wait(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+                touch(Template(r"dungeon_b.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面右移
 
-            wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
-                          resolution=(3040, 1440)))
-            touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
-                           resolution=(3040, 1440)))  # 對應難度關卡
+                wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                              resolution=(3040, 1440)))
+                touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                               resolution=(3040, 1440)))  # 對應難度關卡
+            except TargetNotFoundError:
+                print('n')
+                test_pop_upwindow('地下城難度選擇錯誤!')
+                test_to_index()
+                return
         elif cb_dungeon_lv.current() < 3:
-            wait(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
-            touch(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面左移
-            wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
-                          resolution=(3040, 1440)))
-            touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
-                           resolution=(3040, 1440)))  # 對應難度關卡
-    except TargetNotFoundError:
-        print('n')
-        test_pop_upwindow('地下城難度選擇錯誤!')
-        test_to_index()
-        return
+            try:
+                wait(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+                touch(Template(r"dungeon_s.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 選擇畫面左移
+                wait(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                              resolution=(3040, 1440)))
+                touch(Template(r"dungeon_lv" + str(cb_dungeon_lv.current() + 1) + ".png", record_pos=(0.027, 0.214),
+                               resolution=(3040, 1440)))  # 對應難度關卡
+            except TargetNotFoundError:
+                print('n')
+                test_pop_upwindow('地下城難度選擇錯誤!')
+                test_to_index()
+                return
     wait(Template(r"prc_button_jump.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
     touch(Template(r"prc_button_jump.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊跳過
     wait(Template(r"prc_button_w_ok.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
@@ -160,23 +232,132 @@ def test_survey():
         print('聖跡未開啟')
         test_to_index()  # 回到主頁
         return
-    try:  # 判斷神殿是不是有開啟
-        wait(Template(r"prc_survey_temple.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
+
+
+def test_holy():  # 需要有一個傳入值，為聖跡難度
+    print(holy_lv_cbText.get(), "holy_lv_cbText")  # holy_lv_cbText.get() 聖跡難度
+    wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
+    try:  # 判斷調查是不是有開啟
+        wait(Template(r"prc_vent_survey.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
                       threshold=0.8))
-        touch(Template(r"prc_survey_temple.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往神殿
-        test_temple()
-    except TargetNotFoundError:
-        print('神殿未開啟')  # 如果神殿未開放
+        touch(Template(r"prc_vent_survey.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往調查
+    except TargetNotFoundError:  # 如果調查未開放
+        test_pop_upwindow('調查未開起')
         test_to_index()  # 回到主頁
         return
 
+    try:  # 判斷聖跡是不是有開啟
+        wait(Template(r"prc_survey_holy.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
+                      threshold=0.8))
+        touch(Template(r"prc_survey_holy.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True))  # 前往聖跡
+    except TargetNotFoundError:
+        test_pop_upwindow('聖跡未開啟')  # 如果聖跡未開放
+        test_to_index()  # 回到主頁
+        return
 
-def test_holy(event):  # 需要有一個傳入值，為聖跡難度
-    print(holy_lv_cbText.get(), "holy_lv_cbText")  # holy_lv_cbText.get() 聖跡難度
+    try:  # 選擇聖跡難度
+        # 等待選擇Lv ()的聖跡調查
+        wait(Template(r"holy_" + holy_lv_cbText.get() + ".png", record_pos=(0.284, 0.066), resolution=(1600, 900),
+                      threshold=0.8, rgb=True))
+        # 選擇Lv ()的聖跡調查
+        touch(Template(r"holy_" + holy_lv_cbText.get() + ".png", record_pos=(0.284, 0.066), resolution=(1600, 900),
+                       threshold=0.8, rgb=True))
+    except TargetNotFoundError:
+        test_pop_upwindow('聖跡調查難度選擇錯誤!')
+        return
+    # 增加掃蕩次數並掃蕩
+    try:
+        wait(Template(r"prc_button_add.png", record_pos=(0.284, 0.056), resolution=(1600, 900)))
+        touch(Template(r"prc_button_add.png", record_pos=(0.284, 0.056), resolution=(1600, 900)), duration=4)  # 增加掃蕩次數
+        wait(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+        touch(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩五次
+    except TargetNotFoundError:
+        test_pop_upwindow('錯誤')
+        return
+    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+    wait(Template(r"prc_button_w_ok.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_w_ok.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色ok按鈕
+    # 按下所有取消按紐
+    try:
+        wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+        sleep(1)
+        wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+        return
+    except TargetNotFoundError:
+        try:
+            sleep(1)
+            wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+            touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+            return
+        except TargetNotFoundError:
+            # test_pop_upwindow('意外')
+            return
 
 
-def test_temple(event):  # 需要有一個傳入值，為神殿難度
+def test_temple():  # 需要有一個傳入值，為神殿難度
     print(temple_lv_cbText.get(), "temple_lv_cbText")  # temple_lv_cbText.get() 傳入的神殿難度
+    wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
+    touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊冒險
+    try:  # 判斷調查是不是有開啟
+        wait(Template(r"prc_vent_survey.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
+                      threshold=0.8))
+        touch(Template(r"prc_vent_survey.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往調查
+    except TargetNotFoundError:  # 如果調查未開放
+        test_pop_upwindow('調查未開起')
+        test_to_index()  # 回到主頁
+        return
+
+    try:  # 判斷神殿是不是有開啟
+        wait(Template(r"prc_survey_temple.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True,
+                      threshold=0.8))
+        touch(Template(r"prc_survey_temple.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440), rgb=True))  # 前往神殿
+    except TargetNotFoundError:
+        test_pop_upwindow('神殿未開啟')  # 如果神殿未開放
+        test_to_index()  # 回到主頁
+        return
+
+    try:  # 選擇神殿難度
+        # 等待選擇Lv ()的神殿調查
+        wait(Template(r"temple_" + temple_lv_cbText.get() + ".png", record_pos=(0.284, 0.066), resolution=(1600, 900)))
+        # 選擇Lv ()的神殿調查
+        touch(Template(r"temple_" + temple_lv_cbText.get() + ".png", record_pos=(0.284, 0.066), resolution=(1600, 900)))
+    except TargetNotFoundError:
+        test_pop_upwindow('神殿調查難度選擇錯誤!')
+        return
+    # 增加掃蕩次數並掃蕩
+    try:
+        wait(Template(r"prc_button_add.png", record_pos=(0.284, 0.056), resolution=(1600, 900)))
+        touch(Template(r"prc_button_add.png", record_pos=(0.284, 0.056), resolution=(1600, 900)), duration=4)  # 增加掃蕩次數
+        wait(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))
+        touch(Template(r"prc_fast_5.png", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 確定掃蕩五次
+    except TargetNotFoundError:
+        test_pop_upwindow('錯誤')
+        return
+    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+    wait(Template(r"prc_button_w_ok.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
+    touch(Template(r"prc_button_w_ok.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色ok按鈕
+    # 按下所有取消按紐
+    try:
+        wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+        sleep(1)
+        wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+        touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+        return
+    except TargetNotFoundError:
+        try:
+            sleep(1)
+            wait(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)), timeout=7)
+            touch(Template(r"prc_st_no.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 白色no按鈕
+            return
+        except TargetNotFoundError:
+            # test_pop_upwindow('意外')
+            return
 
 
 def test_login(user_number):  # user_number用來判斷是第幾個按鈕被點擊
@@ -233,14 +414,28 @@ def test_main():
     if cb_dungeon_lv.get() != '不選擇':
         test_dungeon()
         test_to_index()
+        test_pop_upwindow('地下城自動結束')
+    sleep(3)
+    if cb_exp_vent_lv.get() != '不選擇':
+        test_exp_vent()
+        test_to_index()
+        test_pop_upwindow('經驗值冒險自動結束')
+    sleep(3)
+    if cb_mana_vent_lv.get() != '不選擇':
+        test_mana_vent()
+        test_to_index()
+        test_pop_upwindow('瑪那冒險自動結束')
+    sleep(3)
+    if temple_lv_cbText.get() != '不選擇':
+        test_temple()
+        test_to_index()
+        test_pop_upwindow('神殿調查自動結束')
+    sleep(3)
+    if holy_lv_cbText.get() != '不選擇':
+        test_holy()
+        test_to_index()
+        test_pop_upwindow('聖跡調查自動結束')
 
-    '''print("OK")
-    print(cb_dungeon_lv.get())
-    print(cb_dungeon_lv.current())
-    print(cb_exp_vent_lv.get())
-    print(cb_mana_vent_lv.get())
-    print(cb_temple_lv.get())
-    print(cb_holy_lv.get())'''
 
 
 '''圖形化視窗函式'''
@@ -320,7 +515,7 @@ def test_pop_upwindow(str):
 
     newWindow.title("溫馨小提示 (:3 」∠ )_")
     newWindow.config(bg="white")
-    newWindow.geometry("290x150+10+50")
+    newWindow.geometry("330x170+10+50")
     lb_1 = tk.Label(newWindow, text=str, bg='white', fg='black')
     lb_2 = tk.Label(newWindow, text=str, bg='white', fg='black')
 
@@ -361,7 +556,7 @@ print(win_size)
 div1.grid(column=0, row=0, padx=pad, pady=pad, rowspan=2, sticky=align_mode)
 div2.grid(column=1, row=0, padx=pad, pady=pad, sticky=align_mode)
 div3.grid(column=1, row=1, padx=pad, pady=pad, sticky=align_mode)
-test_pop_upwindow('請選擇自己已經通關過的難度!!')
+test_pop_upwindow('請選擇自己已經通關過的難度!!並確保每日掃蕩次數未消耗\n經驗值與瑪那冒險請選擇"已開放掃蕩之最高進度"')
 '''div3'''
 '''----------------------------分隔線---以下是按鈕.標籤等物件---------------------------------------------'''
 
@@ -488,7 +683,6 @@ tk.Label(div1, text=' ', bg='#323232', fg='#323232').grid(column=1, row=12)
 start.grid(column=1, row=13)
 
 '''------以下 try 功用為將有註冊過的帳號更新到標籤-----'''
-
 
 try:
     with open('Account1.csv', 'r', newline='') as csvfile:
