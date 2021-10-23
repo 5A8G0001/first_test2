@@ -16,8 +16,7 @@ ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
 
 # auto_setup(__file__,devices=["Android://127.0.0.1:5555"])
 
-#dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
-
+dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
 
 def test_to_index():  # 前往主頁
     wait(Template(r"prc_main_index.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
