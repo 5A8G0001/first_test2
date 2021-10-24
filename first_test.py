@@ -1,7 +1,7 @@
 # -*- encoding=utf8 -*-
 __author__ = "a0973_ecy1f7c"
 
-# 版本 2021/10/23 16:34
+# 版本 2021/10/24 00:01
 # 所有touch前都接了一個wait防止網路問題
 # 特殊地方使用try
 
@@ -15,7 +15,7 @@ ST.OPDELAY = 0.3  # 每條步驟間執行間隔
 ST.THRESHOLD = 0.7  # 預設臨界值
 ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
 
-# auto_setup(__file__,devices=["Android://127.0.0.1:5555"])
+#auto_setup(__file__,devices=["Android://127.0.0.1:7555"])
 
 dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
 
@@ -97,8 +97,9 @@ def test_exp_vent():
         except TargetNotFoundError:
             test_pop_upwindow('錯誤')
             return
-    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
-    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
+    wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440), rgb=True))
+    touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440), rgb=True))  # 藍色ok按鈕
+    sleep(2)
     try:
         wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)), timeout=7)
         touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))  # 繼續前往瑪那冒險
@@ -149,7 +150,7 @@ def test_mana_vent():
             return
     wait(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
     touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 藍色ok按鈕
-
+    sleep(2)
     try:
         wait(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))
         touch(Template(r"prc_toexplore_top.PNG", record_pos=(0.111, 0.087), resolution=(3040, 1440)))  # 回到探索top
@@ -415,22 +416,22 @@ def test_main():
         test_dungeon()
         test_to_index()
         test_pop_upwindow('地下城自動結束')
-    sleep(3)
+        sleep(3)
     if cb_exp_vent_lv.get() != '不選擇':
         test_exp_vent()
         test_to_index()
         test_pop_upwindow('經驗值冒險自動結束')
-    sleep(3)
+        sleep(3)
     if cb_mana_vent_lv.get() != '不選擇':
         test_mana_vent()
         test_to_index()
         test_pop_upwindow('瑪那冒險自動結束')
-    sleep(3)
+        sleep(3)
     if temple_lv_cbText.get() != '不選擇':
         test_temple()
         test_to_index()
         test_pop_upwindow('神殿調查自動結束')
-    sleep(3)
+        sleep(3)
     if holy_lv_cbText.get() != '不選擇':
         test_holy()
         test_to_index()
