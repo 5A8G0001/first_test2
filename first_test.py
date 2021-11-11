@@ -101,8 +101,8 @@ def test_exp_vent():
     touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440), rgb=True))  # 藍色ok按鈕
     sleep(2)
     try:
-        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)), timeout=7)
-        touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(3040, 1440)))  # 繼續前往瑪那冒險
+        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900),threshold=0.7, rgb=True), timeout=7)
+        touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900),threshold=0.7, rgb=True))  # 繼續前往瑪那冒險
         return
     except TargetNotFoundError:
         try:
@@ -209,7 +209,7 @@ def test_dungeon():
     touch(Template(r"prc_button_w_ok.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊白色ok按鈕
 
 
-def test_survey():
+def test_survey(): # 目前未使用 (10/31 0:00)
     print('調查，判斷聖蹟調查與神殿調查各自有沒有開，有機會跳限定商店，要按白色取消')
     wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
     touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往冒險
@@ -377,6 +377,7 @@ def test_login(user_number):  # user_number用來判斷是第幾個按鈕被點�
                     test_pop_upwindow('此欄位未存帳號')
                     return
     except FileNotFoundError:  # 如果沒有檔案也會結束
+        test_pop_upwindow('此欄位未存帳號')
         print('此欄位未存帳號')  # 可以考慮做成彈窗
         return
 
@@ -384,6 +385,7 @@ def test_login(user_number):  # user_number用來判斷是第幾個按鈕被點�
         wait(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)), timeout=7)
         touch(Template(r"prc_login_1.PNG", record_pos=(0.26, 0.056), resolution=(3040, 1440)))  # 有資料連動的話就點擊
     except TargetNotFoundError:  # 不在時的錯誤處理 結束函式
+        test_pop_upwindow('不在登入帳號畫面')
         print('不在登入帳號畫面')  # 可以考慮幫我做成彈窗
         return
     #  以下是整個過程
@@ -487,24 +489,28 @@ def test_user(id, ps, btn, newWindow):  # btn用來判斷是第幾個按鈕被�
             sigon_1.config(text='ID:' + id)  # 設定標籤為ID:
             if id == '' or ps == '':  # 如果ID或密碼沒打就等於清空
                 sigon_1.config(text='Sign up')
+                test_pop_upwindow('帳密清空')
                 print('帳密清空')  # 可以考慮做成彈窗
                 return
         elif btn == '2':
             sigon_2.config(text='ID:' + id)  # 設定標籤為ID:
             if id == '' or ps == '':  # 如果ID或密碼沒打就等於清空
                 sigon_2.config(text='Sign up')
+                test_pop_upwindow('帳密清空')
                 print('帳密清空')  # 可以考慮做成彈窗
                 return
         elif btn == '3':
             sigon_3.config(text='ID:' + id)  # 設定標籤為ID:
             if id == '' or ps == '':  # 如果ID或密碼沒打就等於清空
                 sigon_3.config(text='Sign up')
+                test_pop_upwindow('帳密清空')
                 print('帳密清空')  # 可以考慮做成彈窗
                 return
         elif btn == '4':
             sigon_4.config(text='ID:' + id)  # 設定標籤為ID:
             if id == '' or ps == '':  # 如果ID或密碼沒打就等於清空
                 sigon_4.config(text='Sign up')
+                test_pop_upwindow('帳密清空')
                 print('帳密清空')  # 可以考慮做成彈窗
                 return
     print(id, ps)
