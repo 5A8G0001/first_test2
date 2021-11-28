@@ -6,16 +6,31 @@ __author__ = "a0973_ecy1f7c"
 # 特殊地方使用try
 
 import csv
-
-from airtest.core.api import *
+import time
+from tkinter import filedialog
 import tkinter as tk
 import tkinter.ttk as ttk
+from selenium.webdriver import Chrome
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from  selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# 全域變數
+file_path_Label = ""  # 上傳檔案路徑
+settings_file = ['不選擇']  # 設定檔名稱
+cb_Text = None  # cb元件讀取值
+flipA = ""  # 帳號
+flipP = ""  # 密碼
+time1 = ""  # 日期
+time2 = ""  # 時間
+from airtest.core.api import *
 
 ST.OPDELAY = 0.3  # 每條步驟間執行間隔
 ST.THRESHOLD = 0.7  # 預設臨界值
 ST.FIND_TIMEOUT = 15  # wait預設最長等待時間
 
-#auto_setup(__file__,devices=["Android://127.0.0.1:7555"])
+# auto_setup(__file__,devices=["Android://127.0.0.1:7555"])
 
 dev = connect_device('Android:///')  # 連接到當前連接設備，沒連接設備就註解掉
 
@@ -27,7 +42,6 @@ def test_to_index():  # 前往主頁
     except TargetNotFoundError:
         test_pop_upwindow('未找到主頁，還是你已經在主頁了呢?')
         return
-
 
 
 # 把遊戲打開進入主頁之一連串操作
@@ -101,8 +115,10 @@ def test_exp_vent():
     touch(Template(r"prc_button_ok.png", record_pos=(0.111, 0.087), resolution=(3040, 1440), rgb=True))  # 藍色ok按鈕
     sleep(2)
     try:
-        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900),threshold=0.7, rgb=True), timeout=7)
-        touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900),threshold=0.7, rgb=True))  # 繼續前往瑪那冒險
+        wait(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900), threshold=0.7, rgb=True),
+             timeout=7)
+        touch(Template(r"前往瑪娜冒險.png", record_pos=(0.018, 0.187), resolution=(1600, 900), threshold=0.7,
+                       rgb=True))  # 繼續前往瑪那冒險
         return
     except TargetNotFoundError:
         try:
@@ -209,7 +225,7 @@ def test_dungeon():
     touch(Template(r"prc_button_w_ok.PNG", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 點擊白色ok按鈕
 
 
-def test_survey(): # 目前未使用 (10/31 0:00)
+def test_survey():  # 目前未使用 (10/31 0:00)
     print('調查，判斷聖蹟調查與神殿調查各自有沒有開，有機會跳限定商店，要按白色取消')
     wait(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))
     touch(Template(r"prc_main_vent.png", record_pos=(0.027, 0.214), resolution=(3040, 1440)))  # 前往冒險
@@ -440,8 +456,280 @@ def test_main():
         test_pop_upwindow('聖跡調查自動結束')
 
 
-
 '''圖形化視窗函式'''
+
+
+# flipclass主視窗
+def test_FlipClass_window(oldwindow, a, p):
+    if a.get() == "" or p.get() == "":
+        return
+    global flipA
+    global flipP
+    flipA = a.get()
+    flipP = p.get()
+
+    oldwindow.destroy()
+
+    newWindow = tk.Toplevel(window)
+    newWindow.attributes("-topmost",True)
+    newWindow.config(bg="white")
+    newWindow.title("FlipClass")
+    newWindow.iconbitmap("stust.ico")
+    newWindow.geometry("450x250")
+    newWindow.resizable(0, 0)
+
+    div1 = tk.Frame(newWindow, width=150, height=300, bg='#323232')
+    div2 = tk.Frame(newWindow, width=300, height=300, bg='white')
+
+    div1.grid(column=0, row=0)
+    div2.grid(column=1, row=0)
+
+    # 數值讀取
+    var1 = tk.StringVar()  # 作業名稱Entry值
+    NradioValue_hw_choose = tk.IntVar()  # 作業 固定是0 不固定是1 要用.get()
+    TradioValue_hw_choose = tk.IntVar()  # 作業 自動是0 排程是1
+
+    # 登出鍵
+    bt_logout = tk.Button(newWindow, text='登出', bg='white', fg='#323232',
+                          command=lambda: test_flipclass_ID_Window(newWindow))
+    # 新增設定鍵
+    bt_settings = tk.Button(newWindow, text='新增設定', bg='#323232', fg='white',
+                            command=lambda: test_FlipClass_settings_window(var1, div1, c=1))
+    # 檔案選擇鍵
+    bt_file = tk.Button(newWindow, text='檔案選擇', bg='#323232', fg='white',
+                        command=lambda: test_FlipClass_bt_file(newWindow))
+
+    # 執行鍵
+    bt_go = tk.Button(newWindow, text='執行', bg='white', fg='#323232',
+                      command=lambda: test_FlipClass_bt_go(var1.get(), NradioValue_hw_choose.get(),
+                                                           TradioValue_hw_choose.get(), file_path_Label))
+
+    # 刪除設定鍵
+    bt_del_settings = tk.Button(newWindow, text='刪除設定', bg='#323232', fg='white',
+                                command=lambda: test_del_settings(var1, div1, c=None))
+
+    lb_id = tk.Label(newWindow, text=flipA, bg='#323232', fg='white')
+    lb_id.place(x=10, y=10)
+
+    # 排版
+    bt_logout.place(x=100, y=10)
+    bt_settings.place(x=185, y=150)
+    bt_file.place(x=350, y=150)
+    bt_go.place(x=55, y=150)
+    bt_del_settings.place(x=250, y=150)
+
+    # 作業標籤
+    lb_hw = tk.Label(newWindow, text='作業', bg='white', font='Arial', fg='#323232')
+    lb_hw.place(x=200, y=10)
+
+    lb_hw_n = tk.Label(newWindow, text='名稱', bg='white', fg='#323232')
+    lb_hw_n.place(x=200, y=60)
+    lb_hw_t = tk.Label(newWindow, text='方式', bg='white', fg='#323232')
+    lb_hw_t.place(x=320, y=60)
+
+    # 作業名稱Entry
+    et_hw = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
+    et_hw.place(x=245, y=12)
+    # 作業Radiobutton是否固定名稱
+    Nrd_hw_choose1 = tk.Radiobutton(newWindow, text='固定', bg='white',
+                                    variable=NradioValue_hw_choose, value=0)
+    Nrd_hw_choose2 = tk.Radiobutton(newWindow, text='不固定', bg='white',
+                                    variable=NradioValue_hw_choose, value=1)
+    Nrd_hw_choose1.place(x=200, y=80)
+    Nrd_hw_choose2.place(x=200, y=100)
+
+    # 作業Radiobutton 繳交方式(自動或輸入時間)
+    Trd_hw_choose1 = tk.Radiobutton(newWindow, text='自動繳交', bg='white',
+                                    variable=TradioValue_hw_choose, value=0)
+    Trd_hw_choose2 = tk.Radiobutton(newWindow, text='排程繳交', bg='white',
+                                    variable=TradioValue_hw_choose, value=1,
+                                    command=lambda: test_Trd_hw_choose(newWindow))
+    Trd_hw_choose1.place(x=320, y=80)
+    Trd_hw_choose2.place(x=320, y=100)
+
+    cb_Text = tk.StringVar()
+    cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=7)
+    cb['values'] = settings_file
+    cb.current(0)
+    cb.place(x=40, y=50)
+
+
+# 刪除設定
+def test_del_settings(var1, div1, c):
+    global settings_file
+    global cb_Text
+    if cb_Text == '不選擇':
+        return
+    if cb_Text.get() in settings_file:
+        settings_file.remove(cb_Text.get())
+    print(cb_Text.get())
+    print(settings_file)
+
+    test_FlipClass_settings_window(var1, div1, c)
+
+
+# flipclass主視窗開始執行按鈕
+def test_FlipClass_bt_go(hw_name, name_type, time_type, path):
+    global flipA,flipP,time1,time2
+    print(hw_name, name_type, time_type, path)
+    # 基本上傳完成
+    driver = Chrome(executable_path='D:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+
+    to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
+    to_google = 'https://www.google.com/'
+
+    driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
+
+    login_Account = driver.find_element_by_name("account")  # 找到帳號標籤
+    login_Account.send_keys(flipA)  # 輸入帳號
+    login_Password = driver.find_element_by_name("password")  # 找到密碼標籤
+    login_Password.send_keys(flipP)  # 輸入密碼
+    login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
+    work = hw_name  # 作業名稱
+    # /course/homework/課程編號(29396) span[text()='作業名稱']
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='text']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取作業名稱的作業
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
+
+    driver.switch_to.frame(driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
+
+    path1 = path  # 要上傳的檔案的絕對路徑
+
+    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+
+    time.sleep(2)
+
+    driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
+    time.sleep(5)  # 不可在上傳過程中做其他事
+    WebDriverWait(driver, 7).until(EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
+    WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
+        (By.XPATH, '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe
+
+
+# 設定
+def test_FlipClass_settings_window(var1, div1, c):
+    global settings_file
+    global cb_Text
+    cb_Text = tk.StringVar()  # cb元件讀取值(檔案選擇)
+    if c != None:
+        if var1.get() != '':
+            settings_file.append(var1.get())
+    print(settings_file)
+
+    cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=7)
+    cb['values'] = settings_file
+    cb.current(0)
+    cb.place(x=40, y=50)
+
+
+# 檔案開啟
+def test_FlipClass_bt_file(newWindow):
+    newWindow.attributes("-topmost", False)
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    file_path = ''
+    file_path = filedialog.askopenfilename()
+    print((file_path))
+    global file_path_Label
+    file_path_Label = file_path
+    tk.Label(newWindow, text='                                                                                                     ', bg='white', fg='white').place(x=170, y=200)
+    tk.Label(newWindow, text='%s' % file_path_Label, bg='#323232', fg='white').place(x=170, y=200)
+    root.attributes("-topmost", False)
+    newWindow.attributes("-topmost", True)
+
+# 排程時間設定
+def test_Trd_hw_choose(newWindow):
+    # 時間讀取
+    var1 = tk.StringVar()  # 日期
+    var2 = tk.StringVar()  # 時間
+
+    newWindow = tk.Toplevel(div2)
+    newWindow.title("時間設定")
+    newWindow.config(bg="white")
+    newWindow.geometry("200x100")
+    newWindow.resizable(0, 0)
+    # 標籤
+    lb_t1 = tk.Label(newWindow, text='日期', bg='white', fg='#323232')
+    lb_t2 = tk.Label(newWindow, text='時間', bg='white', fg='#323232')
+
+    tk.Label(newWindow, text=' ', bg='white', fg='#323232').grid(column=1, row=2)
+
+    # Entry
+    et_id = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
+    et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2)
+
+    # 確認按鈕
+    bt_ok = tk.Button(newWindow, text='OK', bg='#323232', fg='white',
+                      command=lambda: test_Trd_hw_choose_OK(newWindow, var1, var2))
+
+    lb_t1.grid(column=0, row=0)
+    lb_t2.grid(column=0, row=1)
+
+    et_id.grid(column=1, row=0)
+    et_ps.grid(column=1, row=1)
+
+    bt_ok.grid(column=1, row=3)
+
+
+# 排程時間設定的確定按鈕事件
+def test_Trd_hw_choose_OK(oldwindow, var1, var2):
+    # 關閉排程時間設定視窗
+    oldwindow.destroy()
+
+    global time1, time2
+    time1 = var1.get()
+    time2 = var2.get()
+    print(var1.get(), var2.get())
+    print(time.strftime("%Y-%m-%d %H:%M", time.localtime()))
+
+
+# flipclass登入視窗
+def test_flipclass_ID_Window(oldwindow):
+    global file_path_Label, settings_file, cb_Text, flipA, flipP, time1, time2
+
+    if oldwindow != None:
+        # 初始化
+        file_path_Label = ""
+        settings_file = ['不選擇']
+        cb_Text = None
+        flipA = ""
+        flipP = ""
+        time1 = ""
+        time2 = ""
+        # 關閉Flip主視窗
+        oldwindow.destroy()
+
+    # 帳密讀取
+    var1 = tk.StringVar()
+    var2 = tk.StringVar()
+
+    newWindow = tk.Toplevel(div2)
+    newWindow.title("FlipClass登入")
+    newWindow.config(bg="white")
+    newWindow.geometry("200x100")
+    newWindow.resizable(0, 0)
+    # 帳密標籤
+    lb_id = tk.Label(newWindow, text='帳號', bg='white', fg='#323232')
+    lb_ps = tk.Label(newWindow, text='密碼', bg='white', fg='#323232')
+    tk.Label(newWindow, text=' ', bg='white', fg='#323232').grid(column=1, row=2)
+
+    # 帳密Entry
+    et_id = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
+    et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2)
+
+    # 確認按鈕
+    bt_ok = tk.Button(newWindow, text='登入', bg='#323232', fg='white',
+                      command=lambda: test_FlipClass_window(newWindow, var1, var2))
+
+    lb_id.grid(column=0, row=0)
+    lb_ps.grid(column=0, row=1)
+
+    et_id.grid(column=1, row=0)
+    et_ps.grid(column=1, row=1)
+
+    bt_ok.grid(column=1, row=3)
 
 
 # 註冊賬密視窗
@@ -453,7 +741,8 @@ def test_ID_Window(bt_number):  # bt_number用來判斷是第幾個按鈕被點�
     newWindow = tk.Toplevel(div3)
     newWindow.title("註冊")
     newWindow.config(bg="white")
-    newWindow.geometry("230x100")
+    newWindow.geometry("200x100")
+    newWindow.resizable(0, 0)
     # 帳密標籤
     lb_id = tk.Label(newWindow, text='帳號', bg='white', fg='#323232')
     lb_ps = tk.Label(newWindow, text='密碼', bg='white', fg='#323232')
@@ -461,6 +750,7 @@ def test_ID_Window(bt_number):  # bt_number用來判斷是第幾個按鈕被點�
     # 帳密Entry
     et_id = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
     et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2)
+    tk.Label(newWindow, text=' ', bg='white', fg='#323232').grid(column=1, row=2)
 
     # 確認按鈕
     bt_ok = tk.Button(newWindow, text='確認', bg='#323232', fg='white',
@@ -472,12 +762,12 @@ def test_ID_Window(bt_number):  # bt_number用來判斷是第幾個按鈕被點�
     et_id.grid(column=1, row=0)
     et_ps.grid(column=1, row=1)
 
-    bt_ok.grid(column=1, row=2)
+    bt_ok.grid(column=1, row=3)
 
 
 # 按下按鈕後的帳密讀出函式
-def test_user(id, ps, btn, newWindow):  # btn用來判斷是第幾個按鈕被點擊
-    newWindow.destroy()
+def test_user(id, ps, btn, oldwindow):  # btn用來判斷是第幾個按鈕被點擊
+    oldwindow.destroy()
     with open('Account' + btn + '.csv', 'w', newline='') as csvfile:  # 寫入模式，如果檔案已存在會覆寫
         fieldnames = ['Id', 'Password']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)  # 設定欄位
@@ -519,10 +809,11 @@ def test_user(id, ps, btn, newWindow):  # btn用來判斷是第幾個按鈕被�
 # 彈窗
 def test_pop_upwindow(str):
     newWindow = tk.Toplevel(window)
-
+    newWindow.iconbitmap("pop_kokoro.ico")
     newWindow.title("溫馨小提示 (:3 」∠ )_")
     newWindow.config(bg="white")
     newWindow.geometry("330x170+10+50")
+    newWindow.resizable(0, 0)
     lb_1 = tk.Label(newWindow, text=str, bg='white', fg='black')
     lb_2 = tk.Label(newWindow, text=str, bg='white', fg='black')
 
@@ -542,6 +833,7 @@ window.title('超異域公主連結自動化控制視窗')
 
 window.resizable(0, 0)
 
+window.iconbitmap("prc_test_icon1.ico")
 align_mode = 'nswe'
 pad = 5
 
@@ -572,6 +864,10 @@ sigon_1 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
 sigon_2 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
 sigon_3 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
 sigon_4 = tk.Label(div3, text='Sign up', bg='white', fg='#323232')
+
+REDIVE_png = tk.PhotoImage(file="REDIVE.png")
+imgLabel = tk.Label(div3, image=REDIVE_png)
+imgLabel.grid(column=0, row=0)
 
 # 註冊按鈕
 bt_sigon_up_1 = tk.Button(div3, text='註冊', bg='#ffffff', fg='black', command=lambda: test_ID_Window('1'))  # 傳入按鈕編號
@@ -605,6 +901,10 @@ bt_sigon_in_1.grid(column=4, row=1, sticky=align_mode)
 bt_sigon_in_2.grid(column=4, row=2, sticky=align_mode)
 bt_sigon_in_3.grid(column=4, row=3, sticky=align_mode)
 bt_sigon_in_4.grid(column=4, row=4, sticky=align_mode)
+'''div2'''
+# FlipClass按鈕
+bt_flipclass = tk.Button(div2, text='FlipClass', bg='white', fg='black', command=lambda: test_flipclass_ID_Window(None))
+bt_flipclass.place(x=10, y=10)
 
 '''div1'''
 ''' 主要執行區塊 '''
@@ -682,7 +982,7 @@ lb_holy_lv.grid(column=1, row=8)
 cb_holy_lv.grid(column=1, row=9)
 
 # 開始按鈕
-cpi = tk.PhotoImage(file="start.PNG")
+cpi = tk.PhotoImage(file="main.PNG")
 start = tk.Button(div1, image=cpi, command=test_main)
 
 # 開始按鈕排版
