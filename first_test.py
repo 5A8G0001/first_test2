@@ -717,7 +717,7 @@ def test_flipclass_ID_Window(oldwindow):
 
     # 帳密Entry
     et_id = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
-    et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2)
+    et_ps = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var2, show='*')
 
     # 確認按鈕
     bt_ok = tk.Button(newWindow, text='登入', bg='#323232', fg='white',
@@ -804,6 +804,9 @@ def test_user(id, ps, btn, oldwindow):  # btn用來判斷是第幾個按鈕被�
                 print('帳密清空')  # 可以考慮做成彈窗
                 return
     print(id, ps)
+
+def test_get_homework():
+    pass
 
 
 # 彈窗
