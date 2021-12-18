@@ -1,7 +1,7 @@
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.keys import Keys
-from selenium import webdriver
-from bs4 import BeautifulSoup
+
+#from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from  selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,21 +9,16 @@ import tkinter as tk
 import time
 import pandas as pd
 import requests
-
-'''這是網頁自動化的測試環境，下禮拜將正式整合進畫面'''
-'''分前後台執行，先前台'''
-'''然後後台，一樣的抓取方式，差別在是否有前台畫面!'''
 def test_web_start():
-    to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
+
     # 基本上傳完成
-    options = webdriver.ChromeOptions() # 後台
-    options.add_argument('--headless') # 後台
-    driver = Chrome(chrome_options=options,executable_path='D:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 後台執行
+    driver = Chrome(executable_path='C:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+    to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
+    to_google = 'https://www.google.com/'
 
 
-    #driver = Chrome(executable_path='D:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 前台
-    driver.get(to_FlipClass)
-
+    FlipAccount = ''
+    FlipPassword = ''
     driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
 
     login_Account = driver.find_element_by_name("account")  # 找到帳號標籤
@@ -32,8 +27,10 @@ def test_web_start():
     login_Password.send_keys('a0973720803')  # 輸入密碼
     login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
 
+    work = 'more'
+
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-       (By.XPATH, "//div[@class='text-right fs-small']//span[text()='more']"))).click()  # 可以省略到只有span  # 點取more
+       (By.XPATH, "//div[@class='text-right fs-small']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取more
 
     tab = driver.find_element_by_id('recentEventTable')
     tab_html = tab.get_attribute('outerHTML')
@@ -41,23 +38,11 @@ def test_web_start():
     #soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
     df = tab_dfs[0]
     df.columns = ["標題","來源","期限"]
-    WorkTitel = []
-    ClassName = []
-    WorkTime = []
-    for i in df["標題"]:
-        WorkTitel.append(i)
-    for i in df["來源"]:
-        ClassName.append(i)
-    for i in df["期限"]:
-        WorkTime.append(i)
-    print(WorkTitel)
-    print(ClassName)
-    print(WorkTime)
-
+    print(df["標題"][1])
 
 
     time.sleep(3)
-    driver.quit()
+
 
     #driver.find_element_by_xpath('//*[@id="xbox2-inline"]/div[1]/div[1]/div[1]/div[1]/ul/li[1]/div[3]/div/div[2]/a/span[2]').click()
     '''WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
@@ -83,7 +68,28 @@ def test_web_start():
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
         (By.XPATH, '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe'''
-test_web_start()
+
+
+windows = tk.Tk()
+windows.geometry('500x500')
+
+account_Label = tk.Label(windows, text='帳號:')
+account_Label.grid(row=0, column=0)
+account_Text = tk.Entry(windows)
+account_Text.grid(row=0, column=1)
+
+account_Save = tk.Button(windows, text='儲存帳號密碼')
+
+password_Label = tk.Label(windows, text='密碼')
+password_Text = tk.Entry(windows)
+password_Label.grid(row=1, column=0)
+password_Text.grid(row=1, column=1)
+account_Save.grid(row=2,column=0)
+
+start_Button = tk.Button(windows, text='開始', command=lambda: test_web_start())
+start_Button.grid(row=2, column=1)
+
+windows.mainloop()
 
 
 

@@ -15,7 +15,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from  selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
+import pandas as pd
 # 全域變數
 file_path_Label = ""  # 上傳檔案路徑
 settings_file = ['不選擇']  # 設定檔名稱
@@ -456,6 +456,34 @@ def test_main():
         test_pop_upwindow('聖跡調查自動結束')
 
 
+
+
+
+def test_lodding(div1):
+    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+
+    to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
+    to_google = 'https://www.google.com/'
+
+    driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
+
+    login_Account = driver.find_element_by_name("account")  # 找到帳號標籤
+    login_Account.send_keys(flipA)  # 輸入帳號
+    login_Password = driver.find_element_by_name("password")  # 找到密碼標籤
+    login_Password.send_keys(flipP)  # 輸入密碼
+    login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
+
+
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='text-right fs-small']//span[text()='more']"))).click()  # 可以省略到只有span  # 點取more
+
+    tab = driver.find_element_by_id('recentEventTable')
+    tab_html = tab.get_attribute('outerHTML')
+    tab_dfs = pd.read_html(tab_html)
+    # soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
+    df = tab_dfs[0]
+    df.columns = ["標題", "來源", "期限"]
+    test_display_hw(df, div1)
 '''圖形化視窗函式'''
 
 
@@ -502,7 +530,7 @@ def test_FlipClass_window(oldwindow, a, p):
     # 執行鍵
     bt_go = tk.Button(newWindow, text='執行', bg='white', fg='#323232',
                       command=lambda: test_FlipClass_bt_go(var1.get(), NradioValue_hw_choose.get(),
-                                                           TradioValue_hw_choose.get(), file_path_Label))
+                                                           TradioValue_hw_choose.get(), file_path_Label,div1))
 
     # 刪除設定鍵
     bt_del_settings = tk.Button(newWindow, text='刪除設定', bg='#323232', fg='white',
@@ -543,7 +571,7 @@ def test_FlipClass_window(oldwindow, a, p):
                                     variable=TradioValue_hw_choose, value=0)
     Trd_hw_choose2 = tk.Radiobutton(newWindow, text='排程繳交', bg='white',
                                     variable=TradioValue_hw_choose, value=1,
-                                    command=lambda: test_Trd_hw_choose(newWindow))
+                                    command=lambda: test_Trd_hw_choose(div2,newWindow))
     Trd_hw_choose1.place(x=320, y=80)
     Trd_hw_choose2.place(x=320, y=100)
 
@@ -551,7 +579,12 @@ def test_FlipClass_window(oldwindow, a, p):
     cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=7)
     cb['values'] = settings_file
     cb.current(0)
-    cb.place(x=40, y=50)
+    cb.place(x=40, y=70)
+
+    test_lodding(div1)
+
+
+
 
 
 # 刪除設定
@@ -569,11 +602,11 @@ def test_del_settings(var1, div1, c):
 
 
 # flipclass主視窗開始執行按鈕
-def test_FlipClass_bt_go(hw_name, name_type, time_type, path):
+def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
     global flipA,flipP,time1,time2
     print(hw_name, name_type, time_type, path)
     # 基本上傳完成
-    driver = Chrome(executable_path='D:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
 
     to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
     to_google = 'https://www.google.com/'
@@ -587,7 +620,19 @@ def test_FlipClass_bt_go(hw_name, name_type, time_type, path):
     login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
     work = hw_name  # 作業名稱
     # /course/homework/課程編號(29396) span[text()='作業名稱']
+
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='text-right fs-small']//span[text()='more']"))).click()  # 可以省略到只有span  # 點取more
+
+    tab = driver.find_element_by_id('recentEventTable')
+    tab_html = tab.get_attribute('outerHTML')
+    tab_dfs = pd.read_html(tab_html)
+    # soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
+    df = tab_dfs[0]
+    df.columns = ["標題", "來源", "期限"]
+    #test_display_hw(df,div1)
+
+    '''WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
         (By.XPATH, "//div[@class='text']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取作業名稱的作業
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
         (By.XPATH, "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
@@ -605,6 +650,53 @@ def test_FlipClass_bt_go(hw_name, name_type, time_type, path):
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
         (By.XPATH, '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe
+'''
+
+def test_display_hw(df,div1):
+    '''newWindow = tk.Toplevel(window)
+    newWindow.iconbitmap("stust.ico")
+    newWindow.title("作業顯示")
+    newWindow.config(bg="white")
+    newWindow.geometry("720x480+10+50")
+    newWindow.resizable(0, 0)'''
+    global settings_file
+    global cb_Text
+    cb_Text = tk.StringVar()  # cb元件讀取值(檔案選擇)
+    lb_1=[]
+    lb_2=[]
+    lb_3=[]
+
+
+    for x in df["標題"]:
+        settings_file.append(x)
+        print(x)
+
+    cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=15)
+    cb['values'] = settings_file
+    cb.current(0)
+    cb.place(x=10, y=70)
+
+
+'''
+    df_sum = 0
+    for i in df["標題"]:
+        lb_1.append(tk.Label(newWindow, text='%s'%i, bg='white', fg='black'))
+        lb_1[df_sum].grid(column=0, row=df_sum)
+        df_sum+=1
+
+    df_sum = 0
+    for i in df["來源"]:
+        lb_2.append(tk.Label(newWindow, text='%s'%i, bg='white', fg='black'))
+        lb_2[df_sum].grid(column=1, row=df_sum)
+        df_sum+=1
+
+    df_sum = 0
+    for i in df["期限"]:
+        lb_3.append(tk.Label(newWindow, text='%s'%i, bg='white', fg='black'))
+        lb_3[df_sum].grid(column=2, row=df_sum)
+        df_sum+=1
+'''
+
 
 
 # 設定
@@ -620,7 +712,7 @@ def test_FlipClass_settings_window(var1, div1, c):
     cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=7)
     cb['values'] = settings_file
     cb.current(0)
-    cb.place(x=40, y=50)
+    cb.place(x=40, y=70)
 
 
 # 檔案開啟
@@ -640,16 +732,20 @@ def test_FlipClass_bt_file(newWindow):
     newWindow.attributes("-topmost", True)
 
 # 排程時間設定
-def test_Trd_hw_choose(newWindow):
+def test_Trd_hw_choose(div2,oldWindow):
     # 時間讀取
     var1 = tk.StringVar()  # 日期
     var2 = tk.StringVar()  # 時間
+    oldWindow.attributes("-topmost", False)
+
 
     newWindow = tk.Toplevel(div2)
     newWindow.title("時間設定")
     newWindow.config(bg="white")
     newWindow.geometry("200x100")
     newWindow.resizable(0, 0)
+    newWindow.attributes("-topmost", True)
+
     # 標籤
     lb_t1 = tk.Label(newWindow, text='日期', bg='white', fg='#323232')
     lb_t2 = tk.Label(newWindow, text='時間', bg='white', fg='#323232')
@@ -730,6 +826,7 @@ def test_flipclass_ID_Window(oldwindow):
     et_ps.grid(column=1, row=1)
 
     bt_ok.grid(column=1, row=3)
+
 
 
 # 註冊賬密視窗
