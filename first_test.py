@@ -460,8 +460,8 @@ def test_main():
 
 
 def test_lodding(div1):
-    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
 
+    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
     to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
     to_google = 'https://www.google.com/'
 
