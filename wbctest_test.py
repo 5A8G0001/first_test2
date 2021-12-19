@@ -12,7 +12,7 @@ import requests
 def test_web_start():
 
     # 基本上傳完成
-    driver = Chrome(executable_path='C:\Chrome\chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
     to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
     to_google = 'https://www.google.com/'
 
@@ -30,7 +30,10 @@ def test_web_start():
     work = 'more'
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-       (By.XPATH, "//div[@class='text-right fs-small']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取more
+       (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取more
+
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取more
 
     tab = driver.find_element_by_id('recentEventTable')
     tab_html = tab.get_attribute('outerHTML')
@@ -38,8 +41,20 @@ def test_web_start():
     #soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
     df = tab_dfs[0]
     df.columns = ["標題","來源","期限"]
-    print(df["標題"][1])
-
+    WorkTitel = []
+    ClassName = []
+    WorkTime = []
+    for i in df["標題"]:
+        if i.find('補交') != -1:
+            print(i)
+        WorkTitel.append(i)
+    for i in df["來源"]:
+        ClassName.append(i)
+    for i in df["期限"]:
+        WorkTime.append(i)
+    print(WorkTitel)
+    print(ClassName)
+    print(WorkTime)
 
     time.sleep(3)
 

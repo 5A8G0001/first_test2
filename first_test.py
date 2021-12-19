@@ -15,6 +15,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from  selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
 import pandas as pd
 # 全域變數
 file_path_Label = ""  # 上傳檔案路徑
@@ -458,12 +459,14 @@ def test_main():
 
 
 
-
+ # 讀取課程資料
 def test_lodding(div1):
 
-    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+    options = webdriver.ChromeOptions()  # 後台
+    options.add_argument('--headless')  # 後台
+    driver = Chrome(chrome_options=options , executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 後台執行
+    #driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 前台
     to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
-    to_google = 'https://www.google.com/'
 
     driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
 
@@ -473,9 +476,11 @@ def test_lodding(div1):
     login_Password.send_keys(flipP)  # 輸入密碼
     login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
 
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取more
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='text-right fs-small']//span[text()='more']"))).click()  # 可以省略到只有span  # 點取more
+        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取more
 
     tab = driver.find_element_by_id('recentEventTable')
     tab_html = tab.get_attribute('outerHTML')
@@ -483,6 +488,22 @@ def test_lodding(div1):
     # soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
     df = tab_dfs[0]
     df.columns = ["標題", "來源", "期限"]
+    WorkTitel = []
+    ClassName = []
+    WorkTime = []
+    for i in df["標題"]:
+        if i.find('補交') != -1:
+            print(i)
+        WorkTitel.append(i)
+    for i in df["來源"]:
+        ClassName.append(i)
+    for i in df["期限"]:
+        WorkTime.append(i)
+    print(WorkTitel)
+    print(ClassName)
+    print(WorkTime)
+
+    time.sleep(3)
     test_display_hw(df, div1)
 '''圖形化視窗函式'''
 
@@ -491,6 +512,15 @@ def test_lodding(div1):
 def test_FlipClass_window(oldwindow, a, p):
     if a.get() == "" or p.get() == "":
         return
+    # 帳號儲存
+    with open('FlipClass_Account.csv', 'w', newline='') as csvfile:  # 寫入模式，如果檔案已存在會覆寫
+        fieldnames = ['Ac', 'Ps']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)  # 設定欄位
+        writer.writeheader()
+        writer.writerow({'Ac': a.get(), 'Ps': p.get()})  # 讀兩個欄位的資料
+        csvfile.close()
+
+
     global flipA
     global flipP
     flipA = a.get()
@@ -621,18 +651,14 @@ def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
     work = hw_name  # 作業名稱
     # /course/homework/課程編號(29396) span[text()='作業名稱']
 
-    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='text-right fs-small']//span[text()='more']"))).click()  # 可以省略到只有span  # 點取more
-
-    tab = driver.find_element_by_id('recentEventTable')
-    tab_html = tab.get_attribute('outerHTML')
-    tab_dfs = pd.read_html(tab_html)
-    # soup = pd.read_html(driver.find_element_by_id('recentEventTable').get_attribute('outerHTMK'))[0]
-    df = tab_dfs[0]
-    df.columns = ["標題", "來源", "期限"]
-    #test_display_hw(df,div1)
-
     '''WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取more
+
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取more'''
+
+
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
         (By.XPATH, "//div[@class='text']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取作業名稱的作業
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
         (By.XPATH, "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
@@ -650,7 +676,7 @@ def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
     WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
         (By.XPATH, '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe
-'''
+
 
 def test_display_hw(df,div1):
     '''newWindow = tk.Toplevel(window)
@@ -769,6 +795,8 @@ def test_Trd_hw_choose(div2,oldWindow):
     bt_ok.grid(column=1, row=3)
 
 
+
+
 # 排程時間設定的確定按鈕事件
 def test_Trd_hw_choose_OK(oldwindow, var1, var2):
     # 關閉排程時間設定視窗
@@ -784,7 +812,8 @@ def test_Trd_hw_choose_OK(oldwindow, var1, var2):
 # flipclass登入視窗
 def test_flipclass_ID_Window(oldwindow):
     global file_path_Label, settings_file, cb_Text, flipA, flipP, time1, time2
-
+    settings_file = ['不選擇']
+    cb_Text = None
     if oldwindow != None:
         # 初始化
         file_path_Label = ""
@@ -794,6 +823,13 @@ def test_flipclass_ID_Window(oldwindow):
         flipP = ""
         time1 = ""
         time2 = ""
+        # 帳號清空
+        with open('FlipClass_Account.csv', 'w', newline='') as csvfile:  # 寫入模式，如果檔案已存在會覆寫
+            fieldnames = ['Ac', 'Ps']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)  # 設定欄位
+            writer.writeheader()
+            writer.writerow({'Ac': "", 'Ps': ""})  # 讀兩個欄位的資料
+            csvfile.close()
         # 關閉Flip主視窗
         oldwindow.destroy()
 
@@ -826,7 +862,17 @@ def test_flipclass_ID_Window(oldwindow):
     et_ps.grid(column=1, row=1)
 
     bt_ok.grid(column=1, row=3)
-
+    # 帳號自動讀取後登入
+    try:
+        with open('FlipClass_Account.csv', 'r', newline='') as csvfile:
+            rows = csv.DictReader(csvfile)
+            for row in rows:
+                if row['Ac'] != "" and row['Ps'] != "":
+                    var1.set(row['Ac'])
+                    var2.set(row['Ps'])
+            test_FlipClass_window(newWindow, var1, var2)
+    except FileNotFoundError:
+        pass
 
 
 # 註冊賬密視窗
