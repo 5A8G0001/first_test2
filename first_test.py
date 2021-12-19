@@ -6,6 +6,7 @@ __author__ = "a0973_ecy1f7c"
 # 特殊地方使用try
 
 import csv
+import threading
 import time
 from tkinter import filedialog
 import tkinter as tk
@@ -20,11 +21,15 @@ import pandas as pd
 # 全域變數
 file_path_Label = ""  # 上傳檔案路徑
 settings_file = ['不選擇']  # 設定檔名稱
+settings_file2 = [] # 自動抓取檔
 cb_Text = None  # cb元件讀取值
 flipA = ""  # 帳號
 flipP = ""  # 密碼
 time1 = ""  # 日期
 time2 = ""  # 時間
+WorkTitel = [] # 儲存抓到的作業名稱
+ClassName = [] # 儲存抓到的作業的課程名稱
+WorkTime = [] # 儲存抓到的作業的期限
 from airtest.core.api import *
 
 ST.OPDELAY = 0.3  # 每條步驟間執行間隔
@@ -477,10 +482,10 @@ def test_lodding(div1):
     login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取more
+        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取右邊的三個箭頭
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取more
+        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取最近事件
 
     tab = driver.find_element_by_id('recentEventTable')
     tab_html = tab.get_attribute('outerHTML')
@@ -551,7 +556,7 @@ def test_FlipClass_window(oldwindow, a, p):
     bt_logout = tk.Button(newWindow, text='登出', bg='white', fg='#323232',
                           command=lambda: test_flipclass_ID_Window(newWindow))
     # 新增設定鍵
-    bt_settings = tk.Button(newWindow, text='新增設定', bg='#323232', fg='white',
+    bt_settings = tk.Button(newWindow, text='新增作業', bg='#323232', fg='white',
                             command=lambda: test_FlipClass_settings_window(var1, div1, c=1))
     # 檔案選擇鍵
     bt_file = tk.Button(newWindow, text='檔案選擇', bg='#323232', fg='white',
@@ -563,7 +568,7 @@ def test_FlipClass_window(oldwindow, a, p):
                                                            TradioValue_hw_choose.get(), file_path_Label,div1))
 
     # 刪除設定鍵
-    bt_del_settings = tk.Button(newWindow, text='刪除設定', bg='#323232', fg='white',
+    bt_del_settings = tk.Button(newWindow, text='刪除作業', bg='#323232', fg='white',
                                 command=lambda: test_del_settings(var1, div1, c=None))
 
     lb_id = tk.Label(newWindow, text=flipA, bg='#323232', fg='white')
@@ -573,7 +578,7 @@ def test_FlipClass_window(oldwindow, a, p):
     bt_logout.place(x=100, y=10)
     bt_settings.place(x=185, y=150)
     bt_file.place(x=350, y=150)
-    bt_go.place(x=55, y=150)
+    bt_go.place(x=65, y=170)
     bt_del_settings.place(x=250, y=150)
 
     # 作業標籤
@@ -584,6 +589,13 @@ def test_FlipClass_window(oldwindow, a, p):
     lb_hw_n.place(x=200, y=60)
     lb_hw_t = tk.Label(newWindow, text='方式', bg='white', fg='#323232')
     lb_hw_t.place(x=320, y=60)
+
+    # 選單標籤
+    lb_cb1_t = tk.Label(newWindow, text='設定作業', bg='#323232', fg='white')
+    lb_cb1_t.place(x=50, y=45)
+
+    lb_cb2_t = tk.Label(newWindow, text='作業提醒', bg='#323232', fg='white')
+    lb_cb2_t.place(x=50, y=105)
 
     # 作業名稱Entry
     et_hw = tk.Entry(newWindow, bg='#323232', fg='white', textvariable=var1)
@@ -621,7 +633,7 @@ def test_FlipClass_window(oldwindow, a, p):
 def test_del_settings(var1, div1, c):
     global settings_file
     global cb_Text
-    if cb_Text == '不選擇':
+    if cb_Text == '不選擇' or cb_Text == '':
         return
     if cb_Text.get() in settings_file:
         settings_file.remove(cb_Text.get())
@@ -630,16 +642,136 @@ def test_del_settings(var1, div1, c):
 
     test_FlipClass_settings_window(var1, div1, c)
 
+# 自動繳交，非固定時間
+def test_auto_t1(hw_name,name_type,path):
+    global flipA , flipP
 
-# flipclass主視窗開始執行按鈕
-def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
-    global flipA,flipP,time1,time2
-    print(hw_name, name_type, time_type, path)
-    # 基本上傳完成
-    driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑
+    while 1: # 一直到找到作業都不會停
+        options = webdriver.ChromeOptions()  # 後台
+        options.add_argument('--headless')  # 後台
+        driver = Chrome(chrome_options=options,
+                        executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 後台執行
+        # driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 前台
+        to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
 
+        driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
+
+        login_Account = driver.find_element_by_name("account")  # 找到帳號標籤
+        login_Account.send_keys(flipA)  # 輸入帳號
+        login_Password = driver.find_element_by_name("password")  # 找到密碼標籤
+        login_Password.send_keys(flipP)  # 輸入密碼
+        login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
+
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+            (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取右邊的三個箭頭
+
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+            (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取最近事件
+
+        tab = driver.find_element_by_id('recentEventTable')
+        tab_html = tab.get_attribute('outerHTML')
+        tab_dfs = pd.read_html(tab_html)
+
+        df = tab_dfs[0] # 儲存取的到的課程資訊
+        df.columns = ["標題", "來源", "期限"]
+        WorkTitel = []
+        if name_type == 0: # 如果是固定名稱，必須完全配對
+            for i in df["標題"]:
+                if i == hw_name:
+                    print(i) # 繳交
+                    test_pop_upwindow('已經找到作業，繳交中')
+                    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         "//div[@class='sm-text-overflow']//span[text()='%s']" % i))).click()  # 可以省略到只有span  # 點取作業名稱的作業
+                    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
+
+                    driver.switch_to.frame(
+                        driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
+
+                    path1 = path  # 要上傳的檔案的絕對路徑
+
+                    WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+
+                    time.sleep(2)
+
+                    driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
+                    time.sleep(5)  # 不可在上傳過程中做其他事
+                    WebDriverWait(driver, 7).until(
+                        EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
+                    WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe'''
+                    driver.quit()
+                    test_pop_upwindow('繳交完成')
+                    return
+
+        elif name_type == 1: # 如果不是固定名稱，只要有包含子字串即可
+            for i in df["標題"]:
+                if i.find(hw_name) != -1:
+                    print(i)
+                    test_pop_upwindow('已經找到包含輸入名稱的作業，繳交中')
+                    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         "//div[@class='sm-text-overflow']//span[text()='%s']" % i))).click()  # 可以省略到只有span  # 點取作業名稱的作業
+                    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
+
+                    driver.switch_to.frame(
+                        driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
+
+                    path1 = path  # 要上傳的檔案的絕對路徑
+
+                    WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+
+                    time.sleep(2)
+
+                    driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
+                    time.sleep(5)  # 不可在上傳過程中做其他事
+                    WebDriverWait(driver, 7).until(
+                        EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
+                    WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
+                        (By.XPATH,
+                         '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe'''
+                    driver.quit()
+                    test_pop_upwindow('繳交完成')
+                    return
+
+        print('搜索中')
+
+        time.sleep(10)
+
+    return
+
+
+# 自動繳交，排程繳交
+def test_auto_t2(hw_name,name_type,path):
+    global time1 , time2
+    # 迴圈直到設定時間
+    while 1:
+        nowtime = time.strftime("%Y/%m/%d")
+        nowtime2 = time.strftime("%H:%M")
+        #print(time.strftime("%Y-%m-%d %H:%M", time.localtime()))
+        print(nowtime+nowtime2,time1+time2)
+        #nowtime = print(time.strftime("%Y-%m-%d %H:%M", time.localtime()))
+        if (nowtime+nowtime2) == (time1+time2): # 到了指定時間，準備繳交
+            print('timeover')
+            test_pop_upwindow('現在是預期繳交時間，開始繳交')
+            break
+        print('等待中')
+        time.sleep(10)
+
+    # 執行一次繳交
+    options = webdriver.ChromeOptions()  # 後台
+    options.add_argument('--headless')  # 後台
+    driver = Chrome(chrome_options=options,
+                    executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 後台執行
+    # driver = Chrome(executable_path='chromedriver_win32\chromedriver.exe')  # 提供chromedriver路徑 前台
     to_FlipClass = 'https://flipclass.stust.edu.tw/'  # flipclass網址
-    to_google = 'https://www.google.com/'
 
     driver.get(to_FlipClass)  # 使用瀏覽器開啟網址
 
@@ -648,34 +780,104 @@ def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
     login_Password = driver.find_element_by_name("password")  # 找到密碼標籤
     login_Password.send_keys(flipP)  # 輸入密碼
     login_Password.send_keys(Keys.ENTER)  # 在密碼輸入盒按Enter
-    work = hw_name  # 作業名稱
-    # /course/homework/課程編號(29396) span[text()='作業名稱']
-
-    '''WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取more
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取more'''
-
+        (By.XPATH, "//div[@class='drawer-controls']//span"))).click()  # 可以省略到只有span  # 點取右邊的三個箭頭
 
     WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='text']//span[text()='%s']" % work))).click()  # 可以省略到只有span  # 點取作業名稱的作業
-    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
-        (By.XPATH, "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
+        (By.XPATH, "//span[text()='最近事件']"))).click()  # 可以省略到只有span  # 點取最近事件
 
-    driver.switch_to.frame(driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
+    tab = driver.find_element_by_id('recentEventTable')
+    tab_html = tab.get_attribute('outerHTML')
+    tab_dfs = pd.read_html(tab_html)
 
-    path1 = path  # 要上傳的檔案的絕對路徑
+    df = tab_dfs[0]  # 儲存取的到的課程資訊
+    df.columns = ["標題", "來源", "期限"]
 
-    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+    if name_type == 0: # 如果是固定名稱，必須作業名稱完全一樣
+        for i in df["標題"]:
+            if i == hw_name:
+                print(i)  # 繳交
+                test_pop_upwindow('已經找到作業，繳交中')
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     "//div[@class='sm-text-overflow']//span[text()='%s']" % i))).click()  # 可以省略到只有span  # 點取作業名稱的作業
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
 
-    time.sleep(2)
+                driver.switch_to.frame(
+                    driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
 
-    driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
-    time.sleep(5)  # 不可在上傳過程中做其他事
-    WebDriverWait(driver, 7).until(EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
-    WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
-        (By.XPATH, '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe
+                path1 = path  # 要上傳的檔案的絕對路徑
+
+                WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+
+                time.sleep(2)
+
+                driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
+                time.sleep(5)  # 不可在上傳過程中做其他事
+                WebDriverWait(driver, 7).until(
+                    EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
+                WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe'''
+                driver.quit()
+                test_pop_upwindow('繳交完成')
+
+    elif name_type == 1: # 如果是非固定名稱，只要包含子字串即可
+        for i in df["標題"]:
+            if i.find(hw_name) != -1:
+                print(i)
+                test_pop_upwindow('已經找到包含輸入名稱的作業，繳交中')
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     "//div[@class='sm-text-overflow']//span[text()='%s']" % i))).click()  # 可以省略到只有span  # 點取作業名稱的作業
+                WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     "//div[@class='text-center fs-margin-default']//span[text()='交作業']"))).click()  # 進入交作業畫面
+
+                driver.switch_to.frame(
+                    driver.find_element_by_class_name('fs-modal-iframe'))  # 交作業畫面為一個內嵌的iframe 要 switch到裡面
+
+                path1 = path  # 要上傳的檔案的絕對路徑
+
+                WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, '//span[text()="上傳檔案"]'))).click()  # 點擊上傳檔案按鈕
+
+                time.sleep(2)
+
+                driver.find_element_by_name('files[]').send_keys(path1)  # 因為學校上傳檔案的方式是input，故可以直接send_keys(路徑)
+                time.sleep(5)  # 不可在上傳過程中做其他事
+                WebDriverWait(driver, 7).until(
+                    EC.element_to_be_clickable((By.CLASS_NAME, 'close'))).click()  # 關閉上傳畫面
+                WebDriverWait(driver, 7).until(EC.element_to_be_clickable(
+                    (By.XPATH,
+                     '//*[@id="media-edit-form"]/div[7]/div/button[1]/span'))).click()  # 繳交 ， 同時可能會離開iframe'''
+                driver.quit()
+                test_pop_upwindow('繳交完成')
+
+    return
+
+# flipclass主視窗開始執行按鈕  基本上傳完成
+def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
+    global flipA,flipP,time1,time2
+    if hw_name == '' or path == '':
+        return
+    print(hw_name, name_type, time_type, path)
+    # 準備任務
+    t = threading.Thread(target= lambda: test_auto_t1(hw_name,name_type,path))
+    t2 = threading.Thread(target= lambda: test_auto_t2(hw_name,name_type,path))
+
+    # 判斷時間類型
+    if time_type == 0: # 自動繳交
+        test_pop_upwindow('開始自動繳交任務')
+        t.start()
+    elif time_type == 1: # 排程繳交
+        test_pop_upwindow('開始排程繳交任務')
+        t2.start()
+    return
 
 
 def test_display_hw(df,div1):
@@ -685,22 +887,20 @@ def test_display_hw(df,div1):
     newWindow.config(bg="white")
     newWindow.geometry("720x480+10+50")
     newWindow.resizable(0, 0)'''
-    global settings_file
-    global cb_Text
-    cb_Text = tk.StringVar()  # cb元件讀取值(檔案選擇)
+    global settings_file2
     lb_1=[]
     lb_2=[]
     lb_3=[]
 
 
     for x in df["標題"]:
-        settings_file.append(x)
+        settings_file2.append(x)
         print(x)
 
     cb = ttk.Combobox(div1, textvariable=cb_Text, state='readonly', width=15)
-    cb['values'] = settings_file
+    cb['values'] = settings_file2
     cb.current(0)
-    cb.place(x=10, y=70)
+    cb.place(x=10, y=130)
 
 
 '''
@@ -811,8 +1011,8 @@ def test_Trd_hw_choose_OK(oldwindow, var1, var2):
 
 # flipclass登入視窗
 def test_flipclass_ID_Window(oldwindow):
-    global file_path_Label, settings_file, cb_Text, flipA, flipP, time1, time2
-    settings_file = ['不選擇']
+    global file_path_Label, settings_file, cb_Text, flipA, flipP, time1, time2, settings_file2
+    settings_file2 = ['不選擇']
     cb_Text = None
     if oldwindow != None:
         # 初始化
