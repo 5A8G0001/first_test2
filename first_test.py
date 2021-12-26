@@ -627,8 +627,6 @@ def test_FlipClass_window(oldwindow, a, p):
 
 
 
-
-
 # 刪除設定
 def test_del_settings(var1, div1, c):
     global settings_file
@@ -864,6 +862,7 @@ def test_auto_t2(hw_name,name_type,path):
 def test_FlipClass_bt_go(hw_name, name_type, time_type, path,div1):
     global flipA,flipP,time1,time2
     if hw_name == '' or path == '':
+        test_pop_upwindow("需有作業名稱和要上傳的檔案")
         return
     print(hw_name, name_type, time_type, path)
     # 準備任務
